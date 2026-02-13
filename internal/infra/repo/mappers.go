@@ -1,8 +1,6 @@
 package repo
 
 import (
-	"database/sql"
-
 	"github.com/MediStatTech/biometric-service/internal/app/biometric/domain"
 	"github.com/google/uuid"
 )
@@ -11,32 +9,14 @@ import (
 // Diseases Mappers
 // ============================================================================
 
-func toDiseaseProps(disease ListDiseasesRow) domain.DiseaseProps {
-	props := domain.DiseaseProps{
+func toDiseaseProps(disease Disease) domain.DiseaseProps {
+	return domain.DiseaseProps{
 		DiseaseID: disease.DiseaseID.String(),
 		Name:      disease.Name,
+		Code:      disease.Code,
 		CreatedAt: disease.CreatedAt,
+		UpdatedAt: disease.UpdatedAt,
 	}
-
-	if disease.UpdatedAt.Valid {
-		props.UpdatedAt = &disease.UpdatedAt.Time
-	}
-
-	return props
-}
-
-func toDiseasePropsFromGetRow(disease GetDiseaseRow) domain.DiseaseProps {
-	props := domain.DiseaseProps{
-		DiseaseID: disease.DiseaseID.String(),
-		Name:      disease.Name,
-		CreatedAt: disease.CreatedAt,
-	}
-
-	if disease.UpdatedAt.Valid {
-		props.UpdatedAt = &disease.UpdatedAt.Time
-	}
-
-	return props
 }
 
 func diseaseToCreateParams(disease *domain.Disease) []any {
@@ -44,92 +24,53 @@ func diseaseToCreateParams(disease *domain.Disease) []any {
 	return []any{
 		id,
 		disease.Name(),
+		disease.Code(),
 		disease.CreatedAt(),
+		disease.UpdatedAt(),
 	}
 }
 
 func diseaseToUpdateParams(disease *domain.Disease) []any {
 	id, _ := uuid.Parse(disease.DiseaseID())
-	var updatedAt sql.NullTime
-	if disease.UpdatedAt() != nil {
-		updatedAt = sql.NullTime{
-			Time:  *disease.UpdatedAt(),
-			Valid: true,
-		}
-	}
-
 	return []any{
 		id,
 		disease.Name(),
-		updatedAt,
+		disease.Code(),
+		disease.UpdatedAt(),
 	}
 }
 
 // ============================================================================
-// DiseaseMetrics Mappers
+// Disease Sensors Mappers
 // ============================================================================
 
-func toDiseaseMetricProps(metric ListDiseaseMetricsRow) domain.DiseaseMetricProps {
-	props := domain.DiseaseMetricProps{
-		DiseaseID: metric.DiseaseID.String(),
-		MetricID:  metric.MetricID.String(),
-		Name:      metric.Name,
-		EnumName:  metric.EnumName,
-		CreatedAt: metric.CreatedAt,
+func toDiseaseSensorProps(ds DiseaseSensor) domain.DiseaseSensorProps {
+	return domain.DiseaseSensorProps{
+		DiseaseID: ds.DiseaseID.String(),
+		SensorID:  ds.SensorID.String(),
+		CreatedAt: ds.CreatedAt,
+		UpdatedAt: ds.UpdatedAt,
 	}
-
-	if metric.UpdatedAt.Valid {
-		props.UpdatedAt = &metric.UpdatedAt.Time
-	}
-
-	return props
 }
 
-func toDiseaseMetricPropsFromListByDiseaseIDRow(metric ListDiseaseMetricsByDiseaseIDRow) domain.DiseaseMetricProps {
-	props := domain.DiseaseMetricProps{
-		DiseaseID: metric.DiseaseID.String(),
-		MetricID:  metric.MetricID.String(),
-		Name:      metric.Name,
-		EnumName:  metric.EnumName,
-		CreatedAt: metric.CreatedAt,
-	}
-
-	if metric.UpdatedAt.Valid {
-		props.UpdatedAt = &metric.UpdatedAt.Time
-	}
-
-	return props
-}
-
-func diseaseMetricToCreateParams(metric *domain.DiseaseMetric) []any {
-	diseaseID, _ := uuid.Parse(metric.DiseaseID())
-	metricID, _ := uuid.Parse(metric.MetricID())
+func diseaseSensorToCreateParams(ds *domain.DiseaseSensor) []any {
+	diseaseID, _ := uuid.Parse(ds.DiseaseID())
+	sensorID, _ := uuid.Parse(ds.SensorID())
 	return []any{
 		diseaseID,
-		metricID,
-		metric.Name(),
-		metric.EnumName(),
-		metric.CreatedAt(),
+		sensorID,
+		ds.CreatedAt(),
+		ds.UpdatedAt(),
 	}
 }
 
-func diseaseMetricToUpdateParams(metric *domain.DiseaseMetric) []any {
-	diseaseID, _ := uuid.Parse(metric.DiseaseID())
-	metricID, _ := uuid.Parse(metric.MetricID())
-	var updatedAt sql.NullTime
-	if metric.UpdatedAt() != nil {
-		updatedAt = sql.NullTime{
-			Time:  *metric.UpdatedAt(),
-			Valid: true,
-		}
-	}
-
+func diseaseSensorToUpdateParams(ds *domain.DiseaseSensor) []any {
+	diseaseID, _ := uuid.Parse(ds.DiseaseID())
+	sensorID, _ := uuid.Parse(ds.SensorID())
 	return []any{
 		diseaseID,
-		metricID,
-		metric.Name(),
-		metric.EnumName(),
-		updatedAt,
+		sensorID,
+		ds.UpdatedAt(),
 	}
 }
 
@@ -137,36 +78,14 @@ func diseaseMetricToUpdateParams(metric *domain.DiseaseMetric) []any {
 // Sensors Mappers
 // ============================================================================
 
-func toSensorProps(sensor ListSensorsRow) domain.SensorProps {
-	props := domain.SensorProps{
+func toSensorProps(sensor Sensor) domain.SensorProps {
+	return domain.SensorProps{
 		SensorID:  sensor.SensorID.String(),
 		Name:      sensor.Name,
-		Status:    sensor.Status,
-		EnumName:  sensor.EnumName,
+		Code:      sensor.Code,
 		CreatedAt: sensor.CreatedAt,
+		UpdatedAt: sensor.UpdatedAt,
 	}
-
-	if sensor.UpdatedAt.Valid {
-		props.UpdatedAt = &sensor.UpdatedAt.Time
-	}
-
-	return props
-}
-
-func toSensorPropsFromGetRow(sensor GetSensorRow) domain.SensorProps {
-	props := domain.SensorProps{
-		SensorID:  sensor.SensorID.String(),
-		Name:      sensor.Name,
-		Status:    sensor.Status,
-		EnumName:  sensor.EnumName,
-		CreatedAt: sensor.CreatedAt,
-	}
-
-	if sensor.UpdatedAt.Valid {
-		props.UpdatedAt = &sensor.UpdatedAt.Time
-	}
-
-	return props
 }
 
 func sensorToCreateParams(sensor *domain.Sensor) []any {
@@ -174,74 +93,82 @@ func sensorToCreateParams(sensor *domain.Sensor) []any {
 	return []any{
 		id,
 		sensor.Name(),
-		sensor.Status().String(),
-		sensor.EnumName(),
+		sensor.Code(),
 		sensor.CreatedAt(),
+		sensor.UpdatedAt(),
 	}
 }
 
 func sensorToUpdateParams(sensor *domain.Sensor) []any {
 	id, _ := uuid.Parse(sensor.SensorID())
-	var updatedAt sql.NullTime
-	if sensor.UpdatedAt() != nil {
-		updatedAt = sql.NullTime{
-			Time:  *sensor.UpdatedAt(),
-			Valid: true,
-		}
-	}
-
 	return []any{
 		id,
 		sensor.Name(),
-		sensor.Status().String(),
-		sensor.EnumName(),
-		updatedAt,
+		sensor.Code(),
+		sensor.UpdatedAt(),
 	}
 }
 
 // ============================================================================
-// SensorMetrics Mappers
+// Sensor Patients Mappers
 // ============================================================================
 
-func toSensorMetricProps(metric SensorMetric) domain.SensorMetricProps {
-	props := domain.SensorMetricProps{
-		SensorID:  metric.SensorID.String(),
-		MetricID:  metric.MetricID.String(),
-		Value:     metric.Value,
-		CreatedAt: metric.CreatedAt,
+func toSensorPatientProps(sp SensorPatient) domain.SensorPatientProps {
+	return domain.SensorPatientProps{
+		SensorID:  sp.SensorID.String(),
+		PatientID: sp.PatientID.String(),
+		Status:    sp.Status,
+		CreatedAt: sp.CreatedAt,
+		UpdatedAt: sp.UpdatedAt,
 	}
-
-	return props
 }
 
-func toSensorMetricPropsFromListBySensorIDRow(metric SensorMetric) domain.SensorMetricProps {
-	props := domain.SensorMetricProps{
-		SensorID:  metric.SensorID.String(),
-		MetricID:  metric.MetricID.String(),
-		Value:     metric.Value,
-		CreatedAt: metric.CreatedAt,
-	}
-
-	return props
-}
-
-func sensorMetricToCreateParams(metric *domain.SensorMetric) []any {
-	sensorID, _ := uuid.Parse(metric.SensorID())
-	metricID, _ := uuid.Parse(metric.MetricID())
+func sensorPatientToCreateParams(sp *domain.SensorPatient) []any {
+	sensorID, _ := uuid.Parse(sp.SensorID())
+	patientID, _ := uuid.Parse(sp.PatientID())
 	return []any{
 		sensorID,
-		metricID,
-		metric.Value(),
-		metric.CreatedAt(),
+		patientID,
+		sp.Status().String(),
+		sp.CreatedAt(),
+		sp.UpdatedAt(),
 	}
 }
 
-func sensorMetricToUpdateParams(metric *domain.SensorMetric) []any {
-	sensorID, _ := uuid.Parse(metric.SensorID())
-	metricID, _ := uuid.Parse(metric.MetricID())
+func sensorPatientToUpdateParams(sp *domain.SensorPatient) []any {
+	sensorID, _ := uuid.Parse(sp.SensorID())
+	patientID, _ := uuid.Parse(sp.PatientID())
 	return []any{
 		sensorID,
+		patientID,
+		sp.Status().String(),
+		sp.UpdatedAt(),
+	}
+}
+
+// ============================================================================
+// Sensor Patient Metrics Mappers
+// ============================================================================
+
+func toSensorPatientMetricProps(spm SensorPatientMetric) domain.SensorPatientMetricProps {
+	return domain.SensorPatientMetricProps{
+		SensorID:  spm.SensorID.String(),
+		PatientID: spm.PatientID.String(),
+		MetricID:  spm.MetricID.String(),
+		Value:     spm.Value,
+		CreatedAt: spm.CreatedAt,
+	}
+}
+
+func sensorPatientMetricToCreateParams(spm *domain.SensorPatientMetric) []any {
+	sensorID, _ := uuid.Parse(spm.SensorID())
+	patientID, _ := uuid.Parse(spm.PatientID())
+	metricID, _ := uuid.Parse(spm.MetricID())
+	return []any{
+		sensorID,
+		patientID,
 		metricID,
-		metric.Value(),
+		spm.Value(),
+		spm.CreatedAt(),
 	}
 }

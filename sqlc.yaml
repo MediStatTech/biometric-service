@@ -22,9 +22,8 @@ sql:
         emit_all_enum_values: true
         omit_unused_structs: true
         rename:
-          positions: "Position"
-          staffs: "Staff"
           diseases: "Disease"
-          disease_metrics: "DiseaseMetric"
+          disease_sensors: "DiseaseSensor"
           sensors: "Sensor"
-          sensor_metrics: "SensorMetric"
+          sensor_patients: "SensorPatient"
+          sensor_patient_metrics: "SensorPatientMetric"

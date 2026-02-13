@@ -49,7 +49,7 @@ func New(p *pkg.Facade, appInstance *app.Facade) (*Server, error) {
 		}),
 	)
 
-	opts := &s_options.Options{
+	_ = &s_options.Options{
 		App: appInstance,
 		PKG: p,
 	}

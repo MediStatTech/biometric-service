@@ -1,18 +1,18 @@
 -- name: GetSensor :one
-SELECT sensor_id, name, status, enum_name, updated_at, created_at
+SELECT sensor_id, name, code, created_at, updated_at
 FROM sensors
 WHERE sensor_id = $1
 LIMIT 1;
 
--- name: ListSensors :many
-SELECT sensor_id, name, status, enum_name, updated_at, created_at
+-- name: GetSensorByCode :one
+SELECT sensor_id, name, code, created_at, updated_at
 FROM sensors
-ORDER BY created_at DESC;
+WHERE code = $1
+LIMIT 1;
 
--- name: ListSensorsByStatus :many
-SELECT sensor_id, name, status, enum_name, updated_at, created_at
+-- name: ListSensors :many
+SELECT sensor_id, name, code, created_at, updated_at
 FROM sensors
-WHERE status = $1
 ORDER BY created_at DESC;
 
 -- name: CountSensors :one
@@ -23,18 +23,17 @@ SELECT COUNT(*) FROM sensors;
 INSERT INTO sensors (
     sensor_id,
     name,
-    status,
-    enum_name,
-    created_at
+    code,
+    created_at,
+    updated_at
 ) VALUES ($1, $2, $3, $4, $5);
 
 -- name: UpdateSensor :exec
 UPDATE sensors
 SET
     name = $2,
-    status = $3,
-    enum_name = $4,
-    updated_at = $5
+    code = $3,
+    updated_at = $4
 WHERE sensor_id = $1;
 
 -- name: DeleteSensor :exec

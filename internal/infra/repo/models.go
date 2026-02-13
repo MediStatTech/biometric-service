@@ -10,8 +10,40 @@ import (
 	"github.com/google/uuid"
 )
 
-type SensorMetric struct {
+type Disease struct {
+	DiseaseID uuid.UUID `db:"disease_id"`
+	Name      string    `db:"name"`
+	Code      string    `db:"code"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+}
+
+type DiseaseSensor struct {
+	DiseaseID uuid.UUID `db:"disease_id"`
 	SensorID  uuid.UUID `db:"sensor_id"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+}
+
+type Sensor struct {
+	SensorID  uuid.UUID `db:"sensor_id"`
+	Name      string    `db:"name"`
+	Code      string    `db:"code"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+}
+
+type SensorPatient struct {
+	SensorID  uuid.UUID `db:"sensor_id"`
+	PatientID uuid.UUID `db:"patient_id"`
+	Status    string    `db:"status"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+}
+
+type SensorPatientMetric struct {
+	SensorID  uuid.UUID `db:"sensor_id"`
+	PatientID uuid.UUID `db:"patient_id"`
 	MetricID  uuid.UUID `db:"metric_id"`
 	Value     float64   `db:"value"`
 	CreatedAt time.Time `db:"created_at"`

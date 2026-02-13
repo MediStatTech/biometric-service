@@ -6,47 +6,37 @@ import (
 	"github.com/google/uuid"
 )
 
-type SensorStatus string
-
-const (
-	SensorStatusActive   SensorStatus = "active"
-	SensorStatusInactive SensorStatus = "inactive"
-	SensorStatusError    SensorStatus = "error"
-)
-
-func (s SensorStatus) String() string {
-	return string(s)
-}
+// ============================================================================
+// Sensor
+// ============================================================================
 
 type SensorProps struct {
 	SensorID  string
 	Name      string
-	Status    string
-	EnumName  string
-	UpdatedAt *time.Time
+	Code      string
 	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type Sensor struct {
 	sensorID  string
 	name      string
-	status    string
-	enumName  string
-	updatedAt *time.Time
+	code      string
 	createdAt time.Time
+	updatedAt time.Time
 }
 
 func NewSensor(
 	name string,
-	enumName string,
+	code string,
 	createdAt time.Time,
 ) *Sensor {
 	return &Sensor{
 		sensorID:  uuid.NewString(),
 		name:      name,
-		status:    SensorStatusActive.String(),
-		enumName:  enumName,
+		code:      code,
 		createdAt: createdAt,
+		updatedAt: createdAt,
 	}
 }
 
@@ -54,51 +44,29 @@ func ReconstituteSensor(p SensorProps) *Sensor {
 	return &Sensor{
 		sensorID:  p.SensorID,
 		name:      p.Name,
-		status:    p.Status,
-		enumName:  p.EnumName,
+		code:      p.Code,
 		createdAt: p.CreatedAt,
 		updatedAt: p.UpdatedAt,
 	}
 }
 
-func (s *Sensor) SensorID() string       { return s.sensorID }
-func (s *Sensor) Name() string           { return s.name }
-func (s *Sensor) Status() SensorStatus   { return SensorStatus(s.status) }
-func (s *Sensor) EnumName() string       { return s.enumName }
-func (s *Sensor) UpdatedAt() *time.Time  { return s.updatedAt }
-func (s *Sensor) CreatedAt() time.Time   { return s.createdAt }
+func (s *Sensor) SensorID() string     { return s.sensorID }
+func (s *Sensor) Name() string         { return s.name }
+func (s *Sensor) Code() string         { return s.code }
+func (s *Sensor) CreatedAt() time.Time { return s.createdAt }
+func (s *Sensor) UpdatedAt() time.Time { return s.updatedAt }
 
 func (s *Sensor) SetName(name string) *Sensor {
 	s.name = name
 	return s
 }
 
-func (s *Sensor) SetStatus(status SensorStatus) *Sensor {
-	s.status = status.String()
-	return s
-}
-
-func (s *Sensor) SetActiveStatus() *Sensor {
-	s.status = SensorStatusActive.String()
-	return s
-}
-
-func (s *Sensor) SetInactiveStatus() *Sensor {
-	s.status = SensorStatusInactive.String()
-	return s
-}
-
-func (s *Sensor) SetErrorStatus() *Sensor {
-	s.status = SensorStatusError.String()
-	return s
-}
-
-func (s *Sensor) SetEnumName(enumName string) *Sensor {
-	s.enumName = enumName
+func (s *Sensor) SetCode(code string) *Sensor {
+	s.code = code
 	return s
 }
 
 func (s *Sensor) SetUpdatedAt(updatedAt time.Time) *Sensor {
-	s.updatedAt = &updatedAt
+	s.updatedAt = updatedAt
 	return s
 }

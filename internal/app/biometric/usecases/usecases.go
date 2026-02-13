@@ -1,22 +1,28 @@
 package usecases
 
 import (
-	"github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/diseases/create"
-	"github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/diseases/get_all"
-	"github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/diseases/get_metrics"
+	"github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/create"
+	"github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/get"
+	patient_create "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/create"
+	patient_get "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/get"
+	patient_retrieve "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/retrieve"
 	"github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/uc_options"
 )
 
 type Facade struct {
-	GetAllDiseases       *get_all.Interactor
-	GetAllDiseaseMetrics *get_metrics.Interactor
-	CreateSensors        *create.Interactor
+	SensorCreate          *create.Interactor
+	SensorGet             *get.Interactor
+	SensorPatientCreate   *patient_create.Interactor
+	SensorPatientGet      *patient_get.Interactor
+	SensorPatientRetrieve *patient_retrieve.Interactor
 }
 
 func New(o *uc_options.Options) *Facade {
 	return &Facade{
-		GetAllDiseases:       get_all.New(o.DiseasesRepo, o.Logger),
-		GetAllDiseaseMetrics: get_metrics.New(o.Logger),
-		CreateSensors:        create.New(o.DiseaseMetricsRepo, o.SensorsRepo, o.Committer, o.Logger),
+		SensorCreate:          create.New(o.SensorsRepo, o.Committer, o.Logger),
+		SensorGet:             get.New(o.SensorsRepo, o.Logger),
+		SensorPatientCreate:   patient_create.New(o.SensorsRepo, o.SensorPatientsRepo, o.Committer, o.Logger),
+		SensorPatientGet:      patient_get.New(o.SensorPatientsRepo, o.Logger),
+		SensorPatientRetrieve: patient_retrieve.New(o.SensorPatientsRepo, o.Logger),
 	}
 }
