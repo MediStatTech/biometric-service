@@ -7,7 +7,6 @@ package repo
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,18 +27,18 @@ const CreateSensor = `-- name: CreateSensor :exec
 INSERT INTO sensors (
     sensor_id,
     name,
-    status,
-    enum_name,
-    created_at
+    code,
+    created_at,
+    updated_at
 ) VALUES ($1, $2, $3, $4, $5)
 `
 
 type CreateSensorParams struct {
 	SensorID  uuid.UUID `db:"sensor_id"`
 	Name      string    `db:"name"`
-	Status    string    `db:"status"`
-	EnumName  string    `db:"enum_name"`
+	Code      string    `db:"code"`
 	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }
 
 // SQL constants for mutations (used in repository)
@@ -47,9 +46,9 @@ func (q *Queries) CreateSensor(ctx context.Context, arg CreateSensorParams) erro
 	_, err := q.db.ExecContext(ctx, CreateSensor,
 		arg.SensorID,
 		arg.Name,
-		arg.Status,
-		arg.EnumName,
+		arg.Code,
 		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
 	return err
 }
@@ -65,112 +64,66 @@ func (q *Queries) DeleteSensor(ctx context.Context, sensorID uuid.UUID) error {
 }
 
 const GetSensor = `-- name: GetSensor :one
-SELECT sensor_id, name, status, enum_name, updated_at, created_at
+SELECT sensor_id, name, code, created_at, updated_at
 FROM sensors
 WHERE sensor_id = $1
 LIMIT 1
 `
 
-type GetSensorRow struct {
-	SensorID  uuid.UUID    `db:"sensor_id"`
-	Name      string       `db:"name"`
-	Status    string       `db:"status"`
-	EnumName  string       `db:"enum_name"`
-	UpdatedAt sql.NullTime `db:"updated_at"`
-	CreatedAt time.Time    `db:"created_at"`
-}
-
-func (q *Queries) GetSensor(ctx context.Context, sensorID uuid.UUID) (GetSensorRow, error) {
+func (q *Queries) GetSensor(ctx context.Context, sensorID uuid.UUID) (Sensor, error) {
 	row := q.db.QueryRowContext(ctx, GetSensor, sensorID)
-	var i GetSensorRow
+	var i Sensor
 	err := row.Scan(
 		&i.SensorID,
 		&i.Name,
-		&i.Status,
-		&i.EnumName,
-		&i.UpdatedAt,
+		&i.Code,
 		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const GetSensorByCode = `-- name: GetSensorByCode :one
+SELECT sensor_id, name, code, created_at, updated_at
+FROM sensors
+WHERE code = $1
+LIMIT 1
+`
+
+func (q *Queries) GetSensorByCode(ctx context.Context, code string) (Sensor, error) {
+	row := q.db.QueryRowContext(ctx, GetSensorByCode, code)
+	var i Sensor
+	err := row.Scan(
+		&i.SensorID,
+		&i.Name,
+		&i.Code,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const ListSensors = `-- name: ListSensors :many
-SELECT sensor_id, name, status, enum_name, updated_at, created_at
+SELECT sensor_id, name, code, created_at, updated_at
 FROM sensors
 ORDER BY created_at DESC
 `
 
-type ListSensorsRow struct {
-	SensorID  uuid.UUID    `db:"sensor_id"`
-	Name      string       `db:"name"`
-	Status    string       `db:"status"`
-	EnumName  string       `db:"enum_name"`
-	UpdatedAt sql.NullTime `db:"updated_at"`
-	CreatedAt time.Time    `db:"created_at"`
-}
-
-func (q *Queries) ListSensors(ctx context.Context) ([]ListSensorsRow, error) {
+func (q *Queries) ListSensors(ctx context.Context) ([]Sensor, error) {
 	rows, err := q.db.QueryContext(ctx, ListSensors)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListSensorsRow{}
+	items := []Sensor{}
 	for rows.Next() {
-		var i ListSensorsRow
+		var i Sensor
 		if err := rows.Scan(
 			&i.SensorID,
 			&i.Name,
-			&i.Status,
-			&i.EnumName,
-			&i.UpdatedAt,
+			&i.Code,
 			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const ListSensorsByStatus = `-- name: ListSensorsByStatus :many
-SELECT sensor_id, name, status, enum_name, updated_at, created_at
-FROM sensors
-WHERE status = $1
-ORDER BY created_at DESC
-`
-
-type ListSensorsByStatusRow struct {
-	SensorID  uuid.UUID    `db:"sensor_id"`
-	Name      string       `db:"name"`
-	Status    string       `db:"status"`
-	EnumName  string       `db:"enum_name"`
-	UpdatedAt sql.NullTime `db:"updated_at"`
-	CreatedAt time.Time    `db:"created_at"`
-}
-
-func (q *Queries) ListSensorsByStatus(ctx context.Context, status string) ([]ListSensorsByStatusRow, error) {
-	rows, err := q.db.QueryContext(ctx, ListSensorsByStatus, status)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListSensorsByStatusRow{}
-	for rows.Next() {
-		var i ListSensorsByStatusRow
-		if err := rows.Scan(
-			&i.SensorID,
-			&i.Name,
-			&i.Status,
-			&i.EnumName,
 			&i.UpdatedAt,
-			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -189,26 +142,23 @@ const UpdateSensor = `-- name: UpdateSensor :exec
 UPDATE sensors
 SET
     name = $2,
-    status = $3,
-    enum_name = $4,
-    updated_at = $5
+    code = $3,
+    updated_at = $4
 WHERE sensor_id = $1
 `
 
 type UpdateSensorParams struct {
-	SensorID  uuid.UUID    `db:"sensor_id"`
-	Name      string       `db:"name"`
-	Status    string       `db:"status"`
-	EnumName  string       `db:"enum_name"`
-	UpdatedAt sql.NullTime `db:"updated_at"`
+	SensorID  uuid.UUID `db:"sensor_id"`
+	Name      string    `db:"name"`
+	Code      string    `db:"code"`
+	UpdatedAt time.Time `db:"updated_at"`
 }
 
 func (q *Queries) UpdateSensor(ctx context.Context, arg UpdateSensorParams) error {
 	_, err := q.db.ExecContext(ctx, UpdateSensor,
 		arg.SensorID,
 		arg.Name,
-		arg.Status,
-		arg.EnumName,
+		arg.Code,
 		arg.UpdatedAt,
 	)
 	return err

@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS disease_sensors CASCADE;

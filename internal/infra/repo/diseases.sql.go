@@ -7,7 +7,6 @@ package repo
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,19 +27,29 @@ const CreateDisease = `-- name: CreateDisease :exec
 INSERT INTO diseases (
     disease_id,
     name,
-    created_at
-) VALUES ($1, $2, $3)
+    code,
+    created_at,
+    updated_at
+) VALUES ($1, $2, $3, $4, $5)
 `
 
 type CreateDiseaseParams struct {
 	DiseaseID uuid.UUID `db:"disease_id"`
 	Name      string    `db:"name"`
+	Code      string    `db:"code"`
 	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }
 
 // SQL constants for mutations (used in repository)
 func (q *Queries) CreateDisease(ctx context.Context, arg CreateDiseaseParams) error {
-	_, err := q.db.ExecContext(ctx, CreateDisease, arg.DiseaseID, arg.Name, arg.CreatedAt)
+	_, err := q.db.ExecContext(ctx, CreateDisease,
+		arg.DiseaseID,
+		arg.Name,
+		arg.Code,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
 	return err
 }
 
@@ -55,58 +64,66 @@ func (q *Queries) DeleteDisease(ctx context.Context, diseaseID uuid.UUID) error 
 }
 
 const GetDisease = `-- name: GetDisease :one
-SELECT disease_id, name, updated_at, created_at
+SELECT disease_id, name, code, created_at, updated_at
 FROM diseases
 WHERE disease_id = $1
 LIMIT 1
 `
 
-type GetDiseaseRow struct {
-	DiseaseID uuid.UUID    `db:"disease_id"`
-	Name      string       `db:"name"`
-	UpdatedAt sql.NullTime `db:"updated_at"`
-	CreatedAt time.Time    `db:"created_at"`
-}
-
-func (q *Queries) GetDisease(ctx context.Context, diseaseID uuid.UUID) (GetDiseaseRow, error) {
+func (q *Queries) GetDisease(ctx context.Context, diseaseID uuid.UUID) (Disease, error) {
 	row := q.db.QueryRowContext(ctx, GetDisease, diseaseID)
-	var i GetDiseaseRow
+	var i Disease
 	err := row.Scan(
 		&i.DiseaseID,
 		&i.Name,
-		&i.UpdatedAt,
+		&i.Code,
 		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const GetDiseaseByCode = `-- name: GetDiseaseByCode :one
+SELECT disease_id, name, code, created_at, updated_at
+FROM diseases
+WHERE code = $1
+LIMIT 1
+`
+
+func (q *Queries) GetDiseaseByCode(ctx context.Context, code string) (Disease, error) {
+	row := q.db.QueryRowContext(ctx, GetDiseaseByCode, code)
+	var i Disease
+	err := row.Scan(
+		&i.DiseaseID,
+		&i.Name,
+		&i.Code,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const ListDiseases = `-- name: ListDiseases :many
-SELECT disease_id, name, updated_at, created_at
+SELECT disease_id, name, code, created_at, updated_at
 FROM diseases
-ORDER BY name
+ORDER BY name ASC
 `
 
-type ListDiseasesRow struct {
-	DiseaseID uuid.UUID    `db:"disease_id"`
-	Name      string       `db:"name"`
-	UpdatedAt sql.NullTime `db:"updated_at"`
-	CreatedAt time.Time    `db:"created_at"`
-}
-
-func (q *Queries) ListDiseases(ctx context.Context) ([]ListDiseasesRow, error) {
+func (q *Queries) ListDiseases(ctx context.Context) ([]Disease, error) {
 	rows, err := q.db.QueryContext(ctx, ListDiseases)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListDiseasesRow{}
+	items := []Disease{}
 	for rows.Next() {
-		var i ListDiseasesRow
+		var i Disease
 		if err := rows.Scan(
 			&i.DiseaseID,
 			&i.Name,
-			&i.UpdatedAt,
+			&i.Code,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -125,17 +142,24 @@ const UpdateDisease = `-- name: UpdateDisease :exec
 UPDATE diseases
 SET
     name = $2,
-    updated_at = $3
+    code = $3,
+    updated_at = $4
 WHERE disease_id = $1
 `
 
 type UpdateDiseaseParams struct {
-	DiseaseID uuid.UUID    `db:"disease_id"`
-	Name      string       `db:"name"`
-	UpdatedAt sql.NullTime `db:"updated_at"`
+	DiseaseID uuid.UUID `db:"disease_id"`
+	Name      string    `db:"name"`
+	Code      string    `db:"code"`
+	UpdatedAt time.Time `db:"updated_at"`
 }
 
 func (q *Queries) UpdateDisease(ctx context.Context, arg UpdateDiseaseParams) error {
-	_, err := q.db.ExecContext(ctx, UpdateDisease, arg.DiseaseID, arg.Name, arg.UpdatedAt)
+	_, err := q.db.ExecContext(ctx, UpdateDisease,
+		arg.DiseaseID,
+		arg.Name,
+		arg.Code,
+		arg.UpdatedAt,
+	)
 	return err
 }
