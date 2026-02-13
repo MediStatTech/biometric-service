@@ -1,4 +1,4 @@
-package disease_create
+package create
 
 import (
 	"context"

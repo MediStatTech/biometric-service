@@ -1,4 +1,4 @@
-package disease_get
+package get
 
 import (
 	"context"
@@ -7,27 +7,27 @@ import (
 )
 
 type Interactor struct {
-	diseasesRepo contracts.DiseasesRepo
+	diseaseSensorsRepo contracts.DiseaseSensorsRepo
 	logger       contracts.Logger
 }
 
 func New(
-	diseasesRepo contracts.DiseasesRepo,
+	diseaseSensorsRepo contracts.DiseaseSensorsRepo,
 	logger contracts.Logger,
 ) *Interactor {
 	return &Interactor{
-		diseasesRepo: diseasesRepo,
+		diseaseSensorsRepo: diseaseSensorsRepo,
 		logger:       logger,
 	}
 }
 
 func (it *Interactor) Execute(ctx context.Context, req Request) (*Response, error) {
-	diseases, err := it.diseasesRepo.FindAll(ctx)
+	diseaseSensors, err := it.diseaseSensorsRepo.FindByDiseaseID(ctx, req.DiseaseID)
 	if err != nil {
-		return nil, errFailedToGetDiseases.SetInternal(err)
+		return nil, errFailedToGetDiseaseSensors.SetInternal(err)
 	}
 
 	return &Response{
-		Diseases: diseases,
+		DiseaseSensors: diseaseSensors,
 	}, nil
 }

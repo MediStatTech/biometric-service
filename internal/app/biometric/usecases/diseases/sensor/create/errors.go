@@ -1,4 +1,4 @@
-package disease_sensor_create
+package create
 
 import (
 	errors "github.com/MediStatTech/MediStat-error"

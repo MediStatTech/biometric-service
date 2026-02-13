@@ -1,4 +1,4 @@
-package disease_get
+package get
 
 import (
 	errors "github.com/MediStatTech/MediStat-error"
