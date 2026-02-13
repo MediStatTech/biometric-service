@@ -28,10 +28,6 @@ func New(
 }
 
 func (it *Interactor) Execute(ctx context.Context, req Request) (*Response, error) {
-	if req.DiseaseID == "" || req.SensorID == "" {
-		return nil, errInvalidRequest
-	}
-
 	now := time.Now().UTC()
 	diseaseSensor := domain.NewDiseaseSensor(
 		req.DiseaseID,

@@ -28,10 +28,6 @@ func New(
 }
 
 func (it *Interactor) Execute(ctx context.Context, req Request) (*Response, error) {
-	if req.Name == "" || req.Code == "" {
-		return nil, errInvalidRequest
-	}
-
 	now := time.Now().UTC()
 	sensor := domain.NewSensor(
 		req.Name,

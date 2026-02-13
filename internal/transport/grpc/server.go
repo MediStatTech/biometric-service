@@ -12,8 +12,11 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
 
+	pb_services "github.com/MediStatTech/biometric-client/pb/go/services/v1"
 	"github.com/MediStatTech/biometric-service/internal/app"
 	s_options "github.com/MediStatTech/biometric-service/internal/app/options"
+	"github.com/MediStatTech/biometric-service/internal/transport/grpc/diseas"
+	"github.com/MediStatTech/biometric-service/internal/transport/grpc/sensor"
 	"github.com/MediStatTech/biometric-service/pkg"
 	"google.golang.org/grpc/reflection"
 )
@@ -49,12 +52,19 @@ func New(p *pkg.Facade, appInstance *app.Facade) (*Server, error) {
 		}),
 	)
 
-	_ = &s_options.Options{
+	opts := &s_options.Options{
 		App: appInstance,
 		PKG: p,
 	}
 
-	// grpc
+	// grpc services
+	diseasHandler := diseas.New(opts)
+	pb_services.RegisterDiseasServiceServer(server, diseasHandler)
+	pb_services.RegisterDiseasSensorServiceServer(server, diseasHandler)
+
+	sensorHandler := sensor.New(opts)
+	pb_services.RegisterSensorServiceServer(server, sensorHandler)
+	pb_services.RegisterSensorPatientServiceServer(server, sensorHandler)
 
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(server, healthServer)

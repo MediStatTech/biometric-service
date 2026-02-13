@@ -8,30 +8,30 @@ import (
 )
 
 type Interactor struct {
-	sensorPatientsRepo contracts.SensorPatientsRepo
+	diseaseSensorsRepo contracts.DiseaseSensorsRepo
 	logger             contracts.Logger
 }
 
 func New(
-	sensorPatientsRepo contracts.SensorPatientsRepo,
+	diseaseSensorsRepo contracts.DiseaseSensorsRepo,
 	logger contracts.Logger,
 ) *Interactor {
 	return &Interactor{
-		sensorPatientsRepo: sensorPatientsRepo,
+		diseaseSensorsRepo: diseaseSensorsRepo,
 		logger:             logger,
 	}
 }
 
 func (it *Interactor) Execute(ctx context.Context, req Request) (*Response, error) {
-	sensorPatient, err := it.sensorPatientsRepo.FindBySensorAndPatient(ctx, req.SensorID, req.PatientID)
+	diseaseSensor, err := it.diseaseSensorsRepo.FindByDiseaseAndSensor(ctx, req.DiseaseID, req.SensorID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errSensorPatientNotFound
+			return nil, errDiseaseSensorNotFound
 		}
-		return nil, errFailedToGetSensorPatient.SetInternal(err)
+		return nil, errFailedToGetDiseaseSensor.SetInternal(err)
 	}
 
 	return &Response{
-		SensorPatient: sensorPatient,
+		DiseaseSensor: diseaseSensor,
 	}, nil
 }

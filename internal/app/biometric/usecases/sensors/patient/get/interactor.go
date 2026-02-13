@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/MediStatTech/biometric-service/internal/app/biometric/contracts"
-	"github.com/MediStatTech/biometric-service/internal/app/biometric/domain"
 )
 
 type Interactor struct {
@@ -23,23 +22,7 @@ func New(
 }
 
 func (it *Interactor) Execute(ctx context.Context, req Request) (*Response, error) {
-	var sensorPatients []domain.SensorPatientProps
-	var err error
-
-	if req.Status != nil {
-		status := domain.SensorPatientStatus(*req.Status)
-		if status != domain.SensorPatientStatusActive && status != domain.SensorPatientStatusInactive {
-			return nil, errInvalidStatus
-		}
-		sensorPatients, err = it.sensorPatientsRepo.FindByStatus(ctx, status)
-	} else if req.SensorID != nil {
-		sensorPatients, err = it.sensorPatientsRepo.FindBySensorID(ctx, *req.SensorID)
-	} else if req.PatientID != nil {
-		sensorPatients, err = it.sensorPatientsRepo.FindByPatientID(ctx, *req.PatientID)
-	} else {
-		sensorPatients, err = it.sensorPatientsRepo.FindByStatus(ctx, domain.SensorPatientStatusActive)
-	}
-
+	sensorPatients, err := it.sensorPatientsRepo.FindBySensorID(ctx, req.SensorID)
 	if err != nil {
 		return nil, errFailedToGetSensorPatients.SetInternal(err)
 	}
