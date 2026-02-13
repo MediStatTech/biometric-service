@@ -2,7 +2,6 @@ package create
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/MediStatTech/biometric-service/internal/app/biometric/contracts"
@@ -32,18 +31,6 @@ func New(
 }
 
 func (it *Interactor) Execute(ctx context.Context, req Request) (*Response, error) {
-	if req.SensorID == "" || req.PatientID == "" {
-		return nil, errInvalidRequest
-	}
-
-	_, err := it.sensorsRepo.FindByID(ctx, req.SensorID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errSensorNotFound
-		}
-		return nil, errFailedToCreateSensorPatient.SetInternal(err)
-	}
-
 	now := time.Now().UTC()
 	sensorPatient := domain.NewSensorPatient(
 		req.SensorID,

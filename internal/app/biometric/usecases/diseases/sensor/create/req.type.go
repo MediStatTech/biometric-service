@@ -1,4 +1,4 @@
-package disease_sensor_create
+package create
 
 type Request struct {
 	DiseaseID string

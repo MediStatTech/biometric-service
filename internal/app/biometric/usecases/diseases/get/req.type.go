@@ -1,4 +1,4 @@
-package disease_get
+package get
 
 import "github.com/MediStatTech/biometric-service/internal/app/biometric/domain"
 

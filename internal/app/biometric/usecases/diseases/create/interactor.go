@@ -1,4 +1,4 @@
-package disease_create
+package create
 
 import (
 	"context"
@@ -29,15 +29,11 @@ func New(
 }
 
 func (it *Interactor) Execute(ctx context.Context, req Request) (*Response, error) {
-	if req.Name == "" || req.Code == "" {
-		return nil, errInvalidRequest
-	}
-
 	_, err := it.diseasesRepo.FindByCode(ctx, req.Code)
 	if err == nil {
-		return nil, errDiseaseCodeExists
-	}
-	if err != sql.ErrNoRows {
+		if err == sql.ErrNoRows {
+			return nil, errDiseaseCodeExists
+		}
 		return nil, errFailedToCreateDisease.SetInternal(err)
 	}
 

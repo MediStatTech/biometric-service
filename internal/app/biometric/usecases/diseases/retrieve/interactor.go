@@ -1,7 +1,8 @@
-package disease_get
+package retrieve
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/MediStatTech/biometric-service/internal/app/biometric/contracts"
 )
@@ -22,12 +23,15 @@ func New(
 }
 
 func (it *Interactor) Execute(ctx context.Context, req Request) (*Response, error) {
-	diseases, err := it.diseasesRepo.FindAll(ctx)
+	disease, err := it.diseasesRepo.FindByID(ctx, req.DiseaseID)
 	if err != nil {
-		return nil, errFailedToGetDiseases.SetInternal(err)
+		if err == sql.ErrNoRows {
+			return nil, errDiseaseNotFound
+		}
+		return nil, errFailedToGetDisease.SetInternal(err)
 	}
 
 	return &Response{
-		Diseases: diseases,
+		Disease: disease,
 	}, nil
 }

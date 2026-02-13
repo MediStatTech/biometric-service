@@ -1,11 +1,11 @@
-package get
+package retrieve
 
 import "github.com/MediStatTech/biometric-service/internal/app/biometric/domain"
 
 type Request struct {
-	SensorID  string
+	DiseaseID string
 }
 
 type Response struct {
-	SensorPatients []domain.SensorPatientProps
+	Disease domain.DiseaseProps
 }
