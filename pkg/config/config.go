@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -16,10 +15,6 @@ type Config struct {
 	// TLS configuration
 	TLSCertFilePath string `env:"TLS_CERT_FILE_PATH"`
 	TLSKeyFilePath  string `env:"TLS_KEY_FILE_PATH"`
-
-	// JWT configuration
-	JWTSecretKey string        `env:"JWT_SECRET_KEY"`
-	JWTDuration  time.Duration `env:"JWT_DURATION"`
 
 	// Database configuration
 	DBHost     string `env:"DB_HOST"`
@@ -48,8 +43,6 @@ func NewConfig() (*Config, error) {
 	cfg.ServerPort = getEnv("SERVER_PORT", "8080")
 	cfg.TLSCertFilePath = getEnv("TLS_CERT_FILE_PATH", "")
 	cfg.TLSKeyFilePath = getEnv("TLS_KEY_FILE_PATH", "")
-	cfg.JWTSecretKey = getEnv("JWT_SECRET_KEY", "")
-	cfg.JWTDuration = getEnvAsDuration("JWT_DURATION", 24*time.Hour)
 	cfg.DBHost = getEnv("DB_HOST", "localhost")
 	cfg.DBPort = getEnv("DB_PORT", "5432")
 	cfg.DBUser = getEnv("DB_USER", "postgres")
@@ -66,18 +59,4 @@ func getEnv(key string, defaultValue string) string {
 		return value
 	}
 	return defaultValue
-}
-
-func getEnvAsDuration(key string, defaultValue time.Duration) time.Duration {
-	valueStr := os.Getenv(key)
-	if valueStr == "" {
-		return defaultValue
-	}
-
-	value, err := time.ParseDuration(valueStr)
-	if err != nil {
-		return defaultValue
-	}
-
-	return value
 }

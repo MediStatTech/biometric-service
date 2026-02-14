@@ -34,6 +34,7 @@ CREATE TABLE sensor_patient_metrics (
     patient_id  UUID NOT NULL,
     metric_id   UUID NOT NULL,
     value       DOUBLE PRECISION NOT NULL,
+    symbol      VARCHAR(50) NOT NULL DEFAULT '',
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     PRIMARY KEY (sensor_id, patient_id, metric_id, created_at),

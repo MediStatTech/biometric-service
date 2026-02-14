@@ -46,5 +46,6 @@ type SensorPatientMetric struct {
 	PatientID uuid.UUID `db:"patient_id"`
 	MetricID  uuid.UUID `db:"metric_id"`
 	Value     float64   `db:"value"`
+	Symbol    string    `db:"symbol"`
 	CreatedAt time.Time `db:"created_at"`
 }
