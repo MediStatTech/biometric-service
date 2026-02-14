@@ -28,8 +28,9 @@ func (h *Handler) SensorCreate(
 	}
 
 	resp, err := h.commands.SensorCreate.Execute(ctx, sensor_create.Request{
-		Name: sensorData.Name,
-		Code: sensorData.Code,
+		Name:   sensorData.Name,
+		Code:   sensorData.Code,
+		Symbol: sensorData.Symbol,
 	})
 	if err != nil {
 		h.pkg.Logger.Errorf("Failed to create sensor: %v", err)

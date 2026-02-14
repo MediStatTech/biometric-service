@@ -14,6 +14,7 @@ type SensorProps struct {
 	SensorID  string
 	Name      string
 	Code      string
+	Symbol    string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -22,6 +23,7 @@ type Sensor struct {
 	sensorID  string
 	name      string
 	code      string
+	symbol    string
 	createdAt time.Time
 	updatedAt time.Time
 }
@@ -29,12 +31,14 @@ type Sensor struct {
 func NewSensor(
 	name string,
 	code string,
+	symbol string,
 	createdAt time.Time,
 ) *Sensor {
 	return &Sensor{
 		sensorID:  uuid.NewString(),
 		name:      name,
 		code:      code,
+		symbol:    symbol,
 		createdAt: createdAt,
 		updatedAt: createdAt,
 	}
@@ -45,6 +49,7 @@ func ReconstituteSensor(p SensorProps) *Sensor {
 		sensorID:  p.SensorID,
 		name:      p.Name,
 		code:      p.Code,
+		symbol:    p.Symbol,
 		createdAt: p.CreatedAt,
 		updatedAt: p.UpdatedAt,
 	}
@@ -53,6 +58,7 @@ func ReconstituteSensor(p SensorProps) *Sensor {
 func (s *Sensor) SensorID() string     { return s.sensorID }
 func (s *Sensor) Name() string         { return s.name }
 func (s *Sensor) Code() string         { return s.code }
+func (s *Sensor) Symbol() string       { return s.symbol }
 func (s *Sensor) CreatedAt() time.Time { return s.createdAt }
 func (s *Sensor) UpdatedAt() time.Time { return s.updatedAt }
 
@@ -63,6 +69,11 @@ func (s *Sensor) SetName(name string) *Sensor {
 
 func (s *Sensor) SetCode(code string) *Sensor {
 	s.code = code
+	return s
+}
+
+func (s *Sensor) SetSymbol(symbol string) *Sensor {
+	s.symbol = symbol
 	return s
 }
 

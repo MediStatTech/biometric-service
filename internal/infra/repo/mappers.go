@@ -83,6 +83,7 @@ func toSensorProps(sensor Sensor) domain.SensorProps {
 		SensorID:  sensor.SensorID.String(),
 		Name:      sensor.Name,
 		Code:      sensor.Code,
+		Symbol:    sensor.Symbol,
 		CreatedAt: sensor.CreatedAt,
 		UpdatedAt: sensor.UpdatedAt,
 	}
@@ -94,6 +95,7 @@ func sensorToCreateParams(sensor *domain.Sensor) []any {
 		id,
 		sensor.Name(),
 		sensor.Code(),
+		sensor.Symbol(),
 		sensor.CreatedAt(),
 		sensor.UpdatedAt(),
 	}
@@ -105,6 +107,7 @@ func sensorToUpdateParams(sensor *domain.Sensor) []any {
 		id,
 		sensor.Name(),
 		sensor.Code(),
+		sensor.Symbol(),
 		sensor.UpdatedAt(),
 	}
 }
