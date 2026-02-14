@@ -9,6 +9,7 @@ import (
 	patient_create "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/create"
 	patient_get "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/get"
 	patient_retrieve "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/retrieve"
+	metric_get "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/metrics/get"
 	pb_services "github.com/MediStatTech/biometric-client/pb/go/services/v1"
 	pb_models "github.com/MediStatTech/biometric-client/pb/go/models/v1"
 )
@@ -174,5 +175,42 @@ func (h *Handler) SensorPatientRetrieve(
 
 	return &pb_services.SensorPatientRetrieveReply{
 		SensorPatient: sensorPatientPropsToPb(resp.SensorPatient),
+	}, nil
+}
+
+func (h *Handler) SensorPatientMetricGet(
+	ctx context.Context,
+	req *pb_services.SensorPatientMetricGetRequest,
+) (*pb_services.SensorPatientMetricGetReply, error) {
+	if req == nil {
+		return nil, errRequestNil
+	}
+
+	if req.SensorId == "" || req.PatientId == "" {
+		return nil, errInvalidSensorData
+	}
+
+	resp, err := h.queries.SensorPatientMetricGet.Execute(ctx, metric_get.Request{
+		SensorID:  req.SensorId,
+		PatientID: req.PatientId,
+	})
+	if err != nil {
+		h.pkg.Logger.Errorf("Failed to get sensor patient metrics: %v", err)
+		return nil, err
+	}
+
+	if len(resp.Metrics) == 0 {
+		return &pb_services.SensorPatientMetricGetReply{
+			SensorPatientMetrics: []*pb_models.SensorPatientMetric_Read{},
+		}, nil
+	}
+
+	metrics := make([]*pb_models.SensorPatientMetric_Read, 0, len(resp.Metrics))
+	for _, metric := range resp.Metrics {
+		metrics = append(metrics, sensorPatientMetricPropsToPb(metric))
+	}
+
+	return &pb_services.SensorPatientMetricGetReply{
+		SensorPatientMetrics: metrics,
 	}, nil
 }

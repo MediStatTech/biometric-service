@@ -10,9 +10,13 @@ import (
 	"github.com/MediStatTech/biometric-service/internal"
 	"github.com/MediStatTech/biometric-service/internal/health"
 	"github.com/MediStatTech/biometric-service/pkg"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		panic(fmt.Errorf("error loading .env file: %w", err))
+	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
@@ -43,7 +47,7 @@ func main() {
 	})
 
 	pkgInstance.Logger.Info("Starting gRPC server", map[string]any{
-		"service": "auth",
+		"service": "biometric",
 		"address": grpcServer.Address(),
 	})
 

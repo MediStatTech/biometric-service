@@ -16,16 +16,18 @@ func New(pkg *pkg.Facade) (*Facade, error) {
 	// Initialize repositories
 	sensorsRepo := repo.NewSensorsRepository(pkg.Postgres.DB)
 	sensorPatientsRepo := repo.NewSensorPatientsRepository(pkg.Postgres.DB)
+	sensorPatientMetricsRepo := repo.NewSensorPatientMetricsRepository(pkg.Postgres.DB)
 	diseasesRepo := repo.NewDiseasesRepository(pkg.Postgres.DB)
 	diseaseSensorsRepo := repo.NewDiseaseSensorsRepository(pkg.Postgres.DB)
 
 	useCasesInstance := usecases.New(&uc_options.Options{
-		Committer:          pkg.Committer,
-		Logger:             pkg.Logger,
-		SensorsRepo:        sensorsRepo,
-		SensorPatientsRepo: sensorPatientsRepo,
-		DiseasesRepo:       diseasesRepo,
-		DiseaseSensorsRepo: diseaseSensorsRepo,
+		Committer:                pkg.Committer,
+		Logger:                   pkg.Logger,
+		SensorsRepo:              sensorsRepo,
+		SensorPatientsRepo:       sensorPatientsRepo,
+		SensorPatientMetricsRepo: sensorPatientMetricsRepo,
+		DiseasesRepo:             diseasesRepo,
+		DiseaseSensorsRepo:       diseaseSensorsRepo,
 	})
 
 	return &Facade{

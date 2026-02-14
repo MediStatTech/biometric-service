@@ -40,7 +40,6 @@ func New(cfg *Config) (*DB, error) {
 		return nil, fmt.Errorf("database config is required")
 	}
 
-	// Set default values
 	if cfg.SSLMode == "" {
 		cfg.SSLMode = "disable"
 	}
@@ -57,30 +56,27 @@ func New(cfg *Config) (*DB, error) {
 		cfg.ConnMaxIdleTime = 1 * time.Minute
 	}
 
-	// Build connection string
 	dsn := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		cfg.Host,
 		cfg.Port,
 		cfg.User,
 		cfg.Password,
 		cfg.Database,
 		cfg.SSLMode,
-	)
+	  )
+	  
 
-	// Open connection
 	sqlDB, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	// Configure connection pool
 	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
 	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
 	sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 	sqlDB.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
 
-	// Verify connection
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -97,7 +93,6 @@ func New(cfg *Config) (*DB, error) {
 	return db, nil
 }
 
-// Migrate runs all pending migrations
 func (db *DB) Migrate(ctx context.Context) error {
 	goose.SetBaseFS(embedMigrations)
 
@@ -112,7 +107,6 @@ func (db *DB) Migrate(ctx context.Context) error {
 	return nil
 }
 
-// MigrateDown rolls back the last migration
 func (db *DB) MigrateDown(ctx context.Context) error {
 	goose.SetBaseFS(embedMigrations)
 
@@ -127,7 +121,6 @@ func (db *DB) MigrateDown(ctx context.Context) error {
 	return nil
 }
 
-// MigrateStatus returns the current migration status
 func (db *DB) MigrateStatus(ctx context.Context) error {
 	goose.SetBaseFS(embedMigrations)
 
@@ -142,7 +135,6 @@ func (db *DB) MigrateStatus(ctx context.Context) error {
 	return nil
 }
 
-// HealthCheck verifies database connectivity
 func (db *DB) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -154,12 +146,10 @@ func (db *DB) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-// Stats returns database statistics
 func (db *DB) Stats() sql.DBStats {
 	return db.DB.Stats()
 }
 
-// Close closes the database connection
 func (db *DB) Close() error {
 	if db.DB != nil {
 		return db.DB.Close()
@@ -167,22 +157,18 @@ func (db *DB) Close() error {
 	return nil
 }
 
-// BeginTx starts a new transaction with the given options
 func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
 	return db.DB.BeginTx(ctx, opts)
 }
 
-// ExecContext executes a query without returning any rows
 func (db *DB) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	return db.DB.ExecContext(ctx, query, args...)
 }
 
-// QueryContext executes a query that returns rows
 func (db *DB) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	return db.DB.QueryContext(ctx, query, args...)
 }
 
-// QueryRowContext executes a query that is expected to return at most one row
 func (db *DB) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
 	return db.DB.QueryRowContext(ctx, query, args...)
 }

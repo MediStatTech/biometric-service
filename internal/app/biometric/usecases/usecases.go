@@ -13,6 +13,7 @@ import (
 	patient_create "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/create"
 	patient_get "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/get"
 	patient_retrieve "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/retrieve"
+	metric_get "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/metrics/get"
 	"github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/uc_options"
 )
 
@@ -23,6 +24,7 @@ type Facade struct {
 	SensorPatientCreate   *patient_create.Interactor
 	SensorPatientGet      *patient_get.Interactor
 	SensorPatientRetrieve *patient_retrieve.Interactor
+	SensorPatientMetricGet *metric_get.Interactor
 
 	// Diseases
 	DiseaseCreate          *disease_create.Interactor
@@ -35,12 +37,13 @@ type Facade struct {
 
 func New(o *uc_options.Options) *Facade {
 	return &Facade{
-		SensorCreate:          sensor_create.New(o.SensorsRepo, o.Committer, o.Logger),
-		SensorGet:             sensor_get.New(o.SensorsRepo, o.Logger),
-		SensorRetrieve:        sensor_retrieve.New(o.SensorsRepo, o.Logger),
-		SensorPatientCreate:   patient_create.New(o.SensorsRepo, o.SensorPatientsRepo, o.Committer, o.Logger),
-		SensorPatientGet:      patient_get.New(o.SensorPatientsRepo, o.Logger),
-		SensorPatientRetrieve: patient_retrieve.New(o.SensorPatientsRepo, o.Logger),
+		SensorCreate:           sensor_create.New(o.SensorsRepo, o.Committer, o.Logger),
+		SensorGet:              sensor_get.New(o.SensorsRepo, o.Logger),
+		SensorRetrieve:         sensor_retrieve.New(o.SensorsRepo, o.Logger),
+		SensorPatientCreate:    patient_create.New(o.SensorsRepo, o.SensorPatientsRepo, o.Committer, o.Logger),
+		SensorPatientGet:       patient_get.New(o.SensorPatientsRepo, o.Logger),
+		SensorPatientRetrieve:  patient_retrieve.New(o.SensorPatientsRepo, o.Logger),
+		SensorPatientMetricGet: metric_get.New(o.SensorPatientMetricsRepo, o.Logger),
 
 		DiseaseCreate:         disease_create.New(o.DiseasesRepo, o.Committer, o.Logger),
 		DiseaseGet:            disease_get.New(o.DiseasesRepo, o.Logger),

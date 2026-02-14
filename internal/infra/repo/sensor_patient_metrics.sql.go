@@ -36,8 +36,9 @@ INSERT INTO sensor_patient_metrics (
     patient_id,
     metric_id,
     value,
+    symbol,
     created_at
-) VALUES ($1, $2, $3, $4, $5)
+) VALUES ($1, $2, $3, $4, $5, $6)
 `
 
 type CreateSensorPatientMetricParams struct {
@@ -45,6 +46,7 @@ type CreateSensorPatientMetricParams struct {
 	PatientID uuid.UUID `db:"patient_id"`
 	MetricID  uuid.UUID `db:"metric_id"`
 	Value     float64   `db:"value"`
+	Symbol    string    `db:"symbol"`
 	CreatedAt time.Time `db:"created_at"`
 }
 
@@ -55,6 +57,7 @@ func (q *Queries) CreateSensorPatientMetric(ctx context.Context, arg CreateSenso
 		arg.PatientID,
 		arg.MetricID,
 		arg.Value,
+		arg.Symbol,
 		arg.CreatedAt,
 	)
 	return err
@@ -128,7 +131,7 @@ func (q *Queries) DeleteSensorPatientMetricsBySensor(ctx context.Context, sensor
 }
 
 const GetLatestSensorPatientMetric = `-- name: GetLatestSensorPatientMetric :one
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE sensor_id = $1 AND patient_id = $2 AND metric_id = $3
 ORDER BY created_at DESC
@@ -149,13 +152,14 @@ func (q *Queries) GetLatestSensorPatientMetric(ctx context.Context, arg GetLates
 		&i.PatientID,
 		&i.MetricID,
 		&i.Value,
+		&i.Symbol,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const GetSensorPatientMetric = `-- name: GetSensorPatientMetric :one
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE sensor_id = $1 AND patient_id = $2 AND metric_id = $3 AND created_at = $4
 LIMIT 1
@@ -181,16 +185,18 @@ func (q *Queries) GetSensorPatientMetric(ctx context.Context, arg GetSensorPatie
 		&i.PatientID,
 		&i.MetricID,
 		&i.Value,
+		&i.Symbol,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const ListSensorPatientMetrics = `-- name: ListSensorPatientMetrics :many
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE sensor_id = $1 AND patient_id = $2
 ORDER BY created_at DESC
+LIMIT 50
 `
 
 type ListSensorPatientMetricsParams struct {
@@ -212,6 +218,7 @@ func (q *Queries) ListSensorPatientMetrics(ctx context.Context, arg ListSensorPa
 			&i.PatientID,
 			&i.MetricID,
 			&i.Value,
+			&i.Symbol,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -228,7 +235,7 @@ func (q *Queries) ListSensorPatientMetrics(ctx context.Context, arg ListSensorPa
 }
 
 const ListSensorPatientMetricsByMetric = `-- name: ListSensorPatientMetricsByMetric :many
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE metric_id = $1
 ORDER BY created_at DESC
@@ -248,6 +255,7 @@ func (q *Queries) ListSensorPatientMetricsByMetric(ctx context.Context, metricID
 			&i.PatientID,
 			&i.MetricID,
 			&i.Value,
+			&i.Symbol,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -264,7 +272,7 @@ func (q *Queries) ListSensorPatientMetricsByMetric(ctx context.Context, metricID
 }
 
 const ListSensorPatientMetricsByPatient = `-- name: ListSensorPatientMetricsByPatient :many
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE patient_id = $1
 ORDER BY created_at DESC
@@ -284,6 +292,7 @@ func (q *Queries) ListSensorPatientMetricsByPatient(ctx context.Context, patient
 			&i.PatientID,
 			&i.MetricID,
 			&i.Value,
+			&i.Symbol,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -300,7 +309,7 @@ func (q *Queries) ListSensorPatientMetricsByPatient(ctx context.Context, patient
 }
 
 const ListSensorPatientMetricsBySensor = `-- name: ListSensorPatientMetricsBySensor :many
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE sensor_id = $1
 ORDER BY created_at DESC
@@ -320,6 +329,7 @@ func (q *Queries) ListSensorPatientMetricsBySensor(ctx context.Context, sensorID
 			&i.PatientID,
 			&i.MetricID,
 			&i.Value,
+			&i.Symbol,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -336,7 +346,7 @@ func (q *Queries) ListSensorPatientMetricsBySensor(ctx context.Context, sensorID
 }
 
 const ListSensorPatientMetricsByTimeRange = `-- name: ListSensorPatientMetricsByTimeRange :many
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE sensor_id = $1
     AND patient_id = $2
@@ -371,6 +381,7 @@ func (q *Queries) ListSensorPatientMetricsByTimeRange(ctx context.Context, arg L
 			&i.PatientID,
 			&i.MetricID,
 			&i.Value,
+			&i.Symbol,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

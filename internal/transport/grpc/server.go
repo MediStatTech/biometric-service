@@ -65,10 +65,11 @@ func New(p *pkg.Facade, appInstance *app.Facade) (*Server, error) {
 	sensorHandler := sensor.New(opts)
 	pb_services.RegisterSensorServiceServer(server, sensorHandler)
 	pb_services.RegisterSensorPatientServiceServer(server, sensorHandler)
+	pb_services.RegisterSensorPatientMetricServiceServer(server, sensorHandler)
 
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(server, healthServer)
-	healthServer.SetServingStatus("auth.v1.AuthService", grpc_health_v1.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus("biometric.v1.BiometricService", grpc_health_v1.HealthCheckResponse_SERVING)
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	reflection.Register(server)
 

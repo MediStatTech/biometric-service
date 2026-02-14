@@ -1,17 +1,18 @@
 -- name: GetSensorPatientMetric :one
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE sensor_id = $1 AND patient_id = $2 AND metric_id = $3 AND created_at = $4
 LIMIT 1;
 
 -- name: ListSensorPatientMetrics :many
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE sensor_id = $1 AND patient_id = $2
-ORDER BY created_at DESC;
+ORDER BY created_at DESC
+LIMIT 50;
 
 -- name: ListSensorPatientMetricsByTimeRange :many
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE sensor_id = $1
     AND patient_id = $2
@@ -20,19 +21,19 @@ WHERE sensor_id = $1
 ORDER BY created_at DESC;
 
 -- name: ListSensorPatientMetricsBySensor :many
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE sensor_id = $1
 ORDER BY created_at DESC;
 
 -- name: ListSensorPatientMetricsByPatient :many
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE patient_id = $1
 ORDER BY created_at DESC;
 
 -- name: ListSensorPatientMetricsByMetric :many
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE metric_id = $1
 ORDER BY created_at DESC;
@@ -43,7 +44,7 @@ FROM sensor_patient_metrics
 WHERE sensor_id = $1 AND patient_id = $2;
 
 -- name: GetLatestSensorPatientMetric :one
-SELECT sensor_id, patient_id, metric_id, value, created_at
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics
 WHERE sensor_id = $1 AND patient_id = $2 AND metric_id = $3
 ORDER BY created_at DESC
@@ -56,8 +57,9 @@ INSERT INTO sensor_patient_metrics (
     patient_id,
     metric_id,
     value,
+    symbol,
     created_at
-) VALUES ($1, $2, $3, $4, $5);
+) VALUES ($1, $2, $3, $4, $5, $6);
 
 -- name: DeleteSensorPatientMetric :exec
 DELETE FROM sensor_patient_metrics

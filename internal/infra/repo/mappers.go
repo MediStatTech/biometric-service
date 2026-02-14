@@ -156,6 +156,7 @@ func toSensorPatientMetricProps(spm SensorPatientMetric) domain.SensorPatientMet
 		PatientID: spm.PatientID.String(),
 		MetricID:  spm.MetricID.String(),
 		Value:     spm.Value,
+		Symbol:    spm.Symbol,
 		CreatedAt: spm.CreatedAt,
 	}
 }
@@ -169,6 +170,7 @@ func sensorPatientMetricToCreateParams(spm *domain.SensorPatientMetric) []any {
 		patientID,
 		metricID,
 		spm.Value(),
+		spm.Symbol(),
 		spm.CreatedAt(),
 	}
 }

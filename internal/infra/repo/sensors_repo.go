@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/MediStatTech/biometric-service/internal/app/biometric/domain"
 	"github.com/MediStatTech/commitplan/drivers/postgres"
@@ -212,6 +213,97 @@ func (r *SensorPatientsRepository) CreateBatchMut(sensorPatients []*domain.Senso
 	mutations := make([]*postgres.Mutation, 0, len(sensorPatients))
 	for _, sp := range sensorPatients {
 		mutations = append(mutations, r.CreateMut(sp))
+	}
+	return mutations
+}
+
+// ============================================================================
+// Sensor Patient Metrics Repository
+// ============================================================================
+
+type SensorPatientMetricsRepository struct {
+	queries *Queries
+}
+
+func NewSensorPatientMetricsRepository(db *sql.DB) *SensorPatientMetricsRepository {
+	return &SensorPatientMetricsRepository{
+		queries: New(db),
+	}
+}
+
+func (r *SensorPatientMetricsRepository) FindBySensorAndPatient(ctx context.Context, sensorID, patientID string) ([]domain.SensorPatientMetricProps, error) {
+	sid, err := uuid.Parse(sensorID)
+	if err != nil {
+		return nil, err
+	}
+	pid, err := uuid.Parse(patientID)
+	if err != nil {
+		return nil, err
+	}
+
+	metrics, err := r.queries.ListSensorPatientMetrics(ctx, ListSensorPatientMetricsParams{
+		SensorID:  sid,
+		PatientID: pid,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]domain.SensorPatientMetricProps, 0, len(metrics))
+	for _, metric := range metrics {
+		result = append(result, toSensorPatientMetricProps(metric))
+	}
+	return result, nil
+}
+
+func (r *SensorPatientMetricsRepository) FindByTimeRange(ctx context.Context, sensorID, patientID string, startTime, endTime time.Time) ([]domain.SensorPatientMetricProps, error) {
+	sid, err := uuid.Parse(sensorID)
+	if err != nil {
+		return nil, err
+	}
+	pid, err := uuid.Parse(patientID)
+	if err != nil {
+		return nil, err
+	}
+
+	metrics, err := r.queries.ListSensorPatientMetricsByTimeRange(ctx, ListSensorPatientMetricsByTimeRangeParams{
+		SensorID:    sid,
+		PatientID:   pid,
+		CreatedAt:   startTime,
+		CreatedAt_2: endTime,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]domain.SensorPatientMetricProps, 0, len(metrics))
+	for _, metric := range metrics {
+		result = append(result, toSensorPatientMetricProps(metric))
+	}
+	return result, nil
+}
+
+func (r *SensorPatientMetricsRepository) CreateMut(metric *domain.SensorPatientMetric) *postgres.Mutation {
+	return postgres.NewMutation(
+		CreateSensorPatientMetric,
+		sensorPatientMetricToCreateParams(metric)...,
+	)
+}
+
+func (r *SensorPatientMetricsRepository) DeleteBySensorAndPatientMut(sensorID, patientID string) *postgres.Mutation {
+	sid, _ := uuid.Parse(sensorID)
+	pid, _ := uuid.Parse(patientID)
+	return postgres.NewMutation(
+		DeleteSensorPatientMetrics,
+		sid,
+		pid,
+	)
+}
+
+func (r *SensorPatientMetricsRepository) CreateBatchMut(metrics []*domain.SensorPatientMetric) []*postgres.Mutation {
+	mutations := make([]*postgres.Mutation, 0, len(metrics))
+	for _, metric := range metrics {
+		mutations = append(mutations, r.CreateMut(metric))
 	}
 	return mutations
 }
