@@ -32,6 +32,7 @@ func (it *Interactor) Execute(ctx context.Context, req Request) (*Response, erro
 	sensor := domain.NewSensor(
 		req.Name,
 		req.Code,
+		req.Symbol,
 		now,
 	)
 

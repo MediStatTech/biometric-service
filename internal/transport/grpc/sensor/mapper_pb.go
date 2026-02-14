@@ -11,6 +11,7 @@ func sensorPropsToPb(sensor domain.SensorProps) *pb_models.Sensor_Read {
 		SensorId: sensor.SensorID,
 		Name:     sensor.Name,
 		Code:     sensor.Code,
+		Symbol:   sensor.Symbol,
 	}
 }
 

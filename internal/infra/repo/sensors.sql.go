@@ -28,15 +28,17 @@ INSERT INTO sensors (
     sensor_id,
     name,
     code,
+    symbol,
     created_at,
     updated_at
-) VALUES ($1, $2, $3, $4, $5)
+) VALUES ($1, $2, $3, $4, $5, $6)
 `
 
 type CreateSensorParams struct {
 	SensorID  uuid.UUID `db:"sensor_id"`
 	Name      string    `db:"name"`
 	Code      string    `db:"code"`
+	Symbol    string    `db:"symbol"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
@@ -47,6 +49,7 @@ func (q *Queries) CreateSensor(ctx context.Context, arg CreateSensorParams) erro
 		arg.SensorID,
 		arg.Name,
 		arg.Code,
+		arg.Symbol,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -64,7 +67,7 @@ func (q *Queries) DeleteSensor(ctx context.Context, sensorID uuid.UUID) error {
 }
 
 const GetSensor = `-- name: GetSensor :one
-SELECT sensor_id, name, code, created_at, updated_at
+SELECT sensor_id, name, code, symbol, created_at, updated_at
 FROM sensors
 WHERE sensor_id = $1
 LIMIT 1
@@ -77,6 +80,7 @@ func (q *Queries) GetSensor(ctx context.Context, sensorID uuid.UUID) (Sensor, er
 		&i.SensorID,
 		&i.Name,
 		&i.Code,
+		&i.Symbol,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -84,7 +88,7 @@ func (q *Queries) GetSensor(ctx context.Context, sensorID uuid.UUID) (Sensor, er
 }
 
 const GetSensorByCode = `-- name: GetSensorByCode :one
-SELECT sensor_id, name, code, created_at, updated_at
+SELECT sensor_id, name, code, symbol, created_at, updated_at
 FROM sensors
 WHERE code = $1
 LIMIT 1
@@ -97,6 +101,7 @@ func (q *Queries) GetSensorByCode(ctx context.Context, code string) (Sensor, err
 		&i.SensorID,
 		&i.Name,
 		&i.Code,
+		&i.Symbol,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -104,7 +109,7 @@ func (q *Queries) GetSensorByCode(ctx context.Context, code string) (Sensor, err
 }
 
 const ListSensors = `-- name: ListSensors :many
-SELECT sensor_id, name, code, created_at, updated_at
+SELECT sensor_id, name, code, symbol, created_at, updated_at
 FROM sensors
 ORDER BY created_at DESC
 `
@@ -122,6 +127,7 @@ func (q *Queries) ListSensors(ctx context.Context) ([]Sensor, error) {
 			&i.SensorID,
 			&i.Name,
 			&i.Code,
+			&i.Symbol,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -143,7 +149,8 @@ UPDATE sensors
 SET
     name = $2,
     code = $3,
-    updated_at = $4
+    symbol = $4,
+    updated_at = $5
 WHERE sensor_id = $1
 `
 
@@ -151,6 +158,7 @@ type UpdateSensorParams struct {
 	SensorID  uuid.UUID `db:"sensor_id"`
 	Name      string    `db:"name"`
 	Code      string    `db:"code"`
+	Symbol    string    `db:"symbol"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
 
@@ -159,6 +167,7 @@ func (q *Queries) UpdateSensor(ctx context.Context, arg UpdateSensorParams) erro
 		arg.SensorID,
 		arg.Name,
 		arg.Code,
+		arg.Symbol,
 		arg.UpdatedAt,
 	)
 	return err

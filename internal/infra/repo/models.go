@@ -29,6 +29,7 @@ type Sensor struct {
 	SensorID  uuid.UUID `db:"sensor_id"`
 	Name      string    `db:"name"`
 	Code      string    `db:"code"`
+	Symbol    string    `db:"symbol"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
