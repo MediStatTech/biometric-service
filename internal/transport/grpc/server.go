@@ -73,7 +73,7 @@ func New(p *pkg.Facade, appInstance *app.Facade) (*Server, error) {
 	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 	reflection.Register(server)
 
-	addr := ":50051"
+	addr := ":50053"
 
 	return &Server{
 		addr:         addr,
