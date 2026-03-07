@@ -96,6 +96,20 @@ func NewDiseaseSensorsRepository(db *sql.DB) *DiseaseSensorsRepository {
 	}
 }
 
+func (r *DiseaseSensorsRepository) FindAll(ctx context.Context) ([]domain.DiseaseSensorProps, error) {
+	diseaseSensors, err := r.queries.ListAllDiseaseSensors(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]domain.DiseaseSensorProps, 0, len(diseaseSensors))
+	for _, ds := range diseaseSensors {
+		result = append(result, toDiseaseSensorProps(ds))
+	}
+
+	return result, nil
+}
+
 func (r *DiseaseSensorsRepository) FindByDiseaseID(ctx context.Context, diseaseID string) ([]domain.DiseaseSensorProps, error) {
 	id, err := uuid.Parse(diseaseID)
 	if err != nil {

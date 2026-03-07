@@ -8,6 +8,8 @@ import (
 	"syscall"
 
 	"github.com/MediStatTech/biometric-service/internal"
+	"github.com/MediStatTech/biometric-service/internal/app"
+	"github.com/MediStatTech/biometric-service/internal/cron/registry"
 	"github.com/MediStatTech/biometric-service/internal/health"
 	"github.com/MediStatTech/biometric-service/pkg"
 	"github.com/joho/godotenv"
@@ -25,7 +27,15 @@ func main() {
 		panic(fmt.Sprintf("Failed to initialize PKG: %v\n", err))
 	}
 
-	grpcServer, err := internal.New(ctx, pkgInstance)
+	appInstance, err := app.New(pkgInstance)
+	if err != nil {
+		pkgInstance.Logger.Fatal("Failed to create app instance.", map[string]any{
+			"error": err,
+		})
+		return
+	}
+
+	grpcServer, err := internal.New(ctx, pkgInstance, appInstance)
 	if err != nil {
 		pkgInstance.Logger.Fatal("Failed to create gRPC server.", map[string]any{
 			"error": err,
@@ -35,7 +45,7 @@ func main() {
 
 	// Start HTTP health server for Kubernetes probes
 	pkgInstance.Logger.Info("Starting health server for Kubernetes probes...", map[string]any{})
-	healthServer := health.NewHealthServer(pkgInstance.Logger, ":8080")
+	healthServer := health.NewHealthServer(pkgInstance.Logger, ":8088")
 	if err := healthServer.Start(); err != nil {
 		pkgInstance.Logger.Fatal("Failed to start health server", map[string]any{
 			"error": err,
@@ -50,6 +60,13 @@ func main() {
 		"service": "biometric",
 		"address": grpcServer.Address(),
 	})
+
+	cronRegistry := registry.New(&registry.Options{
+		Log:     pkgInstance.Logger,
+		Process: appInstance.Biometric.Process,
+	})
+
+	cronRegistry.Start(ctx)
 
 	go func() {
 		defer cancel()
@@ -73,6 +90,9 @@ func main() {
 	} else {
 		pkgInstance.Logger.Info("Health server shutdown complete", map[string]any{})
 	}
+
+	// ---- Cleanup ----
+	cronRegistry.Shutdown()
 
 	if err := grpcServer.Shutdown(context.Background()); err != nil {
 		pkgInstance.Logger.Error("gRPC server shutdown error", map[string]any{

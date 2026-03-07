@@ -14,6 +14,7 @@ import (
 	patient_get "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/get"
 	patient_retrieve "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/retrieve"
 	metric_get "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/metrics/get"
+	"github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/process"
 	"github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/uc_options"
 )
 
@@ -25,6 +26,9 @@ type Facade struct {
 	SensorPatientGet      *patient_get.Interactor
 	SensorPatientRetrieve *patient_retrieve.Interactor
 	SensorPatientMetricGet *metric_get.Interactor
+
+	// Process (cron usecase)
+	Process                *process.Interactor
 
 	// Diseases
 	DiseaseCreate          *disease_create.Interactor
@@ -44,6 +48,15 @@ func New(o *uc_options.Options) *Facade {
 		SensorPatientGet:       patient_get.New(o.SensorPatientsRepo, o.Logger),
 		SensorPatientRetrieve:  patient_retrieve.New(o.SensorPatientsRepo, o.Logger),
 		SensorPatientMetricGet: metric_get.New(o.SensorPatientMetricsRepo, o.Logger),
+
+		Process: process.New(
+			o.SensorsRepo,
+			o.SensorPatientsRepo,
+			o.SensorPatientMetricsRepo,
+			o.DiseaseSensorsRepo,
+			o.Committer,
+			o.Logger,
+		),
 
 		DiseaseCreate:         disease_create.New(o.DiseasesRepo, o.Committer, o.Logger),
 		DiseaseGet:            disease_get.New(o.DiseasesRepo, o.Logger),

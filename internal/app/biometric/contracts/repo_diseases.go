@@ -25,6 +25,7 @@ type DiseasesRepo interface {
 // ============================================================================
 
 type DiseaseSensorsRepo interface {
+	FindAll(ctx context.Context) ([]domain.DiseaseSensorProps, error)
 	FindByDiseaseID(ctx context.Context, diseaseID string) ([]domain.DiseaseSensorProps, error)
 	FindBySensorID(ctx context.Context, sensorID string) ([]domain.DiseaseSensorProps, error)
 	FindByDiseaseAndSensor(ctx context.Context, diseaseID, sensorID string) (domain.DiseaseSensorProps, error)
