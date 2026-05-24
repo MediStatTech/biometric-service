@@ -44,6 +44,9 @@ type SensorPatientsRepo interface {
 type SensorPatientMetricsRepo interface {
 	FindBySensorAndPatient(ctx context.Context, sensorID, patientID string) ([]domain.SensorPatientMetricProps, error)
 	FindByTimeRange(ctx context.Context, sensorID, patientID string, startTime, endTime time.Time) ([]domain.SensorPatientMetricProps, error)
+	FindByTimeRangePaged(ctx context.Context, sensorID, patientID string, startTime, endTime time.Time, limit, offset int32) ([]domain.SensorPatientMetricProps, error)
+	CountByTimeRange(ctx context.Context, sensorID, patientID string, startTime, endTime time.Time) (int64, error)
+	FindLatestForPatients(ctx context.Context, patientIDs []string) ([]domain.SensorPatientMetricProps, error)
 	CreateMut(metric *domain.SensorPatientMetric) *postgres.Mutation
 	DeleteBySensorAndPatientMut(sensorID, patientID string) *postgres.Mutation
 	CreateBatchMut(metrics []*domain.SensorPatientMetric) []*postgres.Mutation

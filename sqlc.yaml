@@ -27,3 +27,5 @@ sql:
           sensors: "Sensor"
           sensor_patients: "SensorPatient"
           sensor_patient_metrics: "SensorPatientMetric"
+          metric_types: "MetricType"
+          disease_metric_overrides: "DiseaseMetricOverride"

@@ -9,15 +9,17 @@ import (
 	db "github.com/MediStatTech/biometric-service/internal/infra/db"
 	pkg_commitplan "github.com/MediStatTech/biometric-service/pkg/commitplan"
 	"github.com/MediStatTech/biometric-service/pkg/config"
+	"github.com/MediStatTech/biometric-service/pkg/panic_registry"
 	"github.com/MediStatTech/commitplan"
 	"github.com/MediStatTech/logger"
 )
 
 type Facade struct {
-	Committer *commitplan.Facade
-	Postgres  *db.DB
-	Logger    *logger.Logger
-	Config    *config.Config
+	Committer     *commitplan.Facade
+	Postgres      *db.DB
+	Logger        *logger.Logger
+	Config        *config.Config
+	PanicRegistry *panic_registry.Registry
 }
 
 func New(ctx context.Context) (*Facade, error) {
@@ -35,10 +37,11 @@ func New(ctx context.Context) (*Facade, error) {
 	logger := initLogger()
 
 	return &Facade{
-		Committer: committer,
-		Postgres:  db,
-		Logger:    logger,
-		Config:    config,
+		Committer:     committer,
+		Postgres:      db,
+		Logger:        logger,
+		Config:        config,
+		PanicRegistry: panic_registry.New(),
 	}, nil
 }
 

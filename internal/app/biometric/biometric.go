@@ -19,15 +19,22 @@ func New(pkg *pkg.Facade) (*Facade, error) {
 	sensorPatientMetricsRepo := repo.NewSensorPatientMetricsRepository(pkg.Postgres.DB)
 	diseasesRepo := repo.NewDiseasesRepository(pkg.Postgres.DB)
 	diseaseSensorsRepo := repo.NewDiseaseSensorsRepository(pkg.Postgres.DB)
+	metricTypesRepo := repo.NewMetricTypesRepository(pkg.Postgres.DB)
+	diseaseMetricOverridesRepo := repo.NewDiseaseMetricOverridesRepository(pkg.Postgres.DB)
+	patientDiseasesReader := repo.NewPatientDiseasesReader(pkg.Postgres.DB)
 
 	useCasesInstance := usecases.New(&uc_options.Options{
-		Committer:                pkg.Committer,
-		Logger:                   pkg.Logger,
-		SensorsRepo:              sensorsRepo,
-		SensorPatientsRepo:       sensorPatientsRepo,
-		SensorPatientMetricsRepo: sensorPatientMetricsRepo,
-		DiseasesRepo:             diseasesRepo,
-		DiseaseSensorsRepo:       diseaseSensorsRepo,
+		Committer:                  pkg.Committer,
+		Logger:                     pkg.Logger,
+		SensorsRepo:                sensorsRepo,
+		SensorPatientsRepo:         sensorPatientsRepo,
+		SensorPatientMetricsRepo:   sensorPatientMetricsRepo,
+		DiseasesRepo:               diseasesRepo,
+		DiseaseSensorsRepo:         diseaseSensorsRepo,
+		MetricTypesRepo:            metricTypesRepo,
+		DiseaseMetricOverridesRepo: diseaseMetricOverridesRepo,
+		PatientDiseasesReader:      patientDiseasesReader,
+		PanicRegistry:              pkg.PanicRegistry,
 	})
 
 	return &Facade{

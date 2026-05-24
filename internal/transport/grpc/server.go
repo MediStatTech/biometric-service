@@ -16,6 +16,8 @@ import (
 	"github.com/MediStatTech/biometric-service/internal/app"
 	s_options "github.com/MediStatTech/biometric-service/internal/app/options"
 	"github.com/MediStatTech/biometric-service/internal/transport/grpc/diseas"
+	"github.com/MediStatTech/biometric-service/internal/transport/grpc/metric_type"
+	"github.com/MediStatTech/biometric-service/internal/transport/grpc/patient_status"
 	"github.com/MediStatTech/biometric-service/internal/transport/grpc/sensor"
 	"github.com/MediStatTech/biometric-service/pkg"
 	"google.golang.org/grpc/reflection"
@@ -66,6 +68,12 @@ func New(p *pkg.Facade, appInstance *app.Facade) (*Server, error) {
 	pb_services.RegisterSensorServiceServer(server, sensorHandler)
 	pb_services.RegisterSensorPatientServiceServer(server, sensorHandler)
 	pb_services.RegisterSensorPatientMetricServiceServer(server, sensorHandler)
+
+	metricTypeHandler := metric_type.New(opts)
+	pb_services.RegisterMetricTypeServiceServer(server, metricTypeHandler)
+
+	patientStatusHandler := patient_status.New(opts)
+	pb_services.RegisterPatientStatusServiceServer(server, patientStatusHandler)
 
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(server, healthServer)

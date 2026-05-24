@@ -18,11 +18,32 @@ type Disease struct {
 	UpdatedAt time.Time `db:"updated_at"`
 }
 
+type DiseaseMetricOverride struct {
+	DiseaseID    uuid.UUID `db:"disease_id"`
+	MetricTypeID uuid.UUID `db:"metric_type_id"`
+	MinValue     float64   `db:"min_value"`
+	MaxValue     float64   `db:"max_value"`
+	CreatedAt    time.Time `db:"created_at"`
+	UpdatedAt    time.Time `db:"updated_at"`
+}
+
 type DiseaseSensor struct {
 	DiseaseID uuid.UUID `db:"disease_id"`
 	SensorID  uuid.UUID `db:"sensor_id"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
+}
+
+type MetricType struct {
+	MetricTypeID uuid.UUID `db:"metric_type_id"`
+	SensorID     uuid.UUID `db:"sensor_id"`
+	Code         string    `db:"code"`
+	Name         string    `db:"name"`
+	Symbol       string    `db:"symbol"`
+	MinValue     float64   `db:"min_value"`
+	MaxValue     float64   `db:"max_value"`
+	CreatedAt    time.Time `db:"created_at"`
+	UpdatedAt    time.Time `db:"updated_at"`
 }
 
 type Sensor struct {

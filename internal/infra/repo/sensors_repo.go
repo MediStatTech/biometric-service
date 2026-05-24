@@ -8,6 +8,7 @@ import (
 	"github.com/MediStatTech/biometric-service/internal/app/biometric/domain"
 	"github.com/MediStatTech/commitplan/drivers/postgres"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 // ============================================================================
@@ -223,12 +224,66 @@ func (r *SensorPatientsRepository) CreateBatchMut(sensorPatients []*domain.Senso
 
 type SensorPatientMetricsRepository struct {
 	queries *Queries
+	db      *sql.DB
 }
 
 func NewSensorPatientMetricsRepository(db *sql.DB) *SensorPatientMetricsRepository {
 	return &SensorPatientMetricsRepository{
 		queries: New(db),
+		db:      db,
 	}
+}
+
+const listLatestMetricsForPatientsSQL = `
+SELECT DISTINCT ON (sensor_id, patient_id, metric_id)
+    sensor_id, patient_id, metric_id, value, symbol, created_at
+FROM sensor_patient_metrics
+WHERE patient_id = ANY($1::uuid[])
+ORDER BY sensor_id, patient_id, metric_id, created_at DESC
+`
+
+func (r *SensorPatientMetricsRepository) FindLatestForPatients(ctx context.Context, patientIDs []string) ([]domain.SensorPatientMetricProps, error) {
+	if len(patientIDs) == 0 {
+		return nil, nil
+	}
+	ids := make([]string, 0, len(patientIDs))
+	for _, id := range patientIDs {
+		if _, err := uuid.Parse(id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	rows, err := r.db.QueryContext(ctx, listLatestMetricsForPatientsSQL, pq.Array(ids))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := []domain.SensorPatientMetricProps{}
+	for rows.Next() {
+		var (
+			sensorID, patientID, metricID uuid.UUID
+			value                         float64
+			symbol                        string
+			createdAt                     time.Time
+		)
+		if err := rows.Scan(&sensorID, &patientID, &metricID, &value, &symbol, &createdAt); err != nil {
+			return nil, err
+		}
+		result = append(result, domain.SensorPatientMetricProps{
+			SensorID:  sensorID.String(),
+			PatientID: patientID.String(),
+			MetricID:  metricID.String(),
+			Value:     value,
+			Symbol:    symbol,
+			CreatedAt: createdAt,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (r *SensorPatientMetricsRepository) FindBySensorAndPatient(ctx context.Context, sensorID, patientID string) ([]domain.SensorPatientMetricProps, error) {
@@ -281,6 +336,53 @@ func (r *SensorPatientMetricsRepository) FindByTimeRange(ctx context.Context, se
 		result = append(result, toSensorPatientMetricProps(metric))
 	}
 	return result, nil
+}
+
+func (r *SensorPatientMetricsRepository) FindByTimeRangePaged(ctx context.Context, sensorID, patientID string, startTime, endTime time.Time, limit, offset int32) ([]domain.SensorPatientMetricProps, error) {
+	sid, err := uuid.Parse(sensorID)
+	if err != nil {
+		return nil, err
+	}
+	pid, err := uuid.Parse(patientID)
+	if err != nil {
+		return nil, err
+	}
+
+	metrics, err := r.queries.ListSensorPatientMetricsByTimeRangePaged(ctx, ListSensorPatientMetricsByTimeRangePagedParams{
+		SensorID:    sid,
+		PatientID:   pid,
+		CreatedAt:   startTime,
+		CreatedAt_2: endTime,
+		Limit:       limit,
+		Offset:      offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]domain.SensorPatientMetricProps, 0, len(metrics))
+	for _, metric := range metrics {
+		result = append(result, toSensorPatientMetricProps(metric))
+	}
+	return result, nil
+}
+
+func (r *SensorPatientMetricsRepository) CountByTimeRange(ctx context.Context, sensorID, patientID string, startTime, endTime time.Time) (int64, error) {
+	sid, err := uuid.Parse(sensorID)
+	if err != nil {
+		return 0, err
+	}
+	pid, err := uuid.Parse(patientID)
+	if err != nil {
+		return 0, err
+	}
+
+	return r.queries.CountSensorPatientMetricsByTimeRange(ctx, CountSensorPatientMetricsByTimeRangeParams{
+		SensorID:    sid,
+		PatientID:   pid,
+		CreatedAt:   startTime,
+		CreatedAt_2: endTime,
+	})
 }
 
 func (r *SensorPatientMetricsRepository) CreateMut(metric *domain.SensorPatientMetric) *postgres.Mutation {

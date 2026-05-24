@@ -7,5 +7,6 @@ type Request struct {
 }
 
 type Response struct {
-	Sensor domain.SensorProps
+	Sensor      domain.SensorProps
+	MetricTypes []domain.MetricTypeProps
 }

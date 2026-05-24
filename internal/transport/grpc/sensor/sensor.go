@@ -2,16 +2,18 @@ package sensor
 
 import (
 	"context"
+	"time"
 
 	sensor_create "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/create"
 	sensor_get "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/get"
-	sensor_retrieve "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/retrieve"
 	patient_create "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/create"
 	patient_get "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/get"
-	patient_retrieve "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/retrieve"
 	metric_get "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/metrics/get"
-	pb_services "github.com/MediStatTech/biometric-client/pb/go/services/v1"
+	metric_history "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/metrics/history"
+	patient_retrieve "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/retrieve"
+	sensor_retrieve "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/retrieve"
 	pb_models "github.com/MediStatTech/biometric-client/pb/go/models/v1"
+	pb_services "github.com/MediStatTech/biometric-client/pb/go/services/v1"
 )
 
 func (h *Handler) SensorCreate(
@@ -21,23 +23,20 @@ func (h *Handler) SensorCreate(
 	if req == nil || req.Sensor == nil {
 		return nil, errRequestNil
 	}
-
-	sensorData := req.Sensor
-	if sensorData.Name == "" || sensorData.Code == "" {
+	if req.Sensor.Name == "" || req.Sensor.Code == "" {
 		return nil, errInvalidSensorData
 	}
 
 	resp, err := h.commands.SensorCreate.Execute(ctx, sensor_create.Request{
-		Name:   sensorData.Name,
-		Code:   sensorData.Code,
-		Symbol: sensorData.Symbol,
+		Name:   req.Sensor.Name,
+		Code:   req.Sensor.Code,
+		Symbol: req.Sensor.Symbol,
 	})
 	if err != nil {
 		h.pkg.Logger.Errorf("Failed to create sensor: %v", err)
 		return nil, err
 	}
 
-	// Retrieve the created sensor to return full information
 	retrieveResp, err := h.queries.SensorRetrieve.Execute(ctx, sensor_retrieve.Request{
 		SensorID: resp.SensorID,
 	})
@@ -47,7 +46,7 @@ func (h *Handler) SensorCreate(
 	}
 
 	return &pb_services.SensorCreateReply{
-		Sensor: sensorPropsToPb(retrieveResp.Sensor),
+		Sensor: sensorPropsToPb(retrieveResp.Sensor, retrieveResp.MetricTypes),
 	}, nil
 }
 
@@ -72,8 +71,8 @@ func (h *Handler) SensorGet(
 	}
 
 	sensors := make([]*pb_models.Sensor_Read, 0, len(resp.Sensors))
-	for _, sensor := range resp.Sensors {
-		sensors = append(sensors, sensorPropsToPb(sensor))
+	for _, s := range resp.Sensors {
+		sensors = append(sensors, sensorPropsToPb(s.Sensor, s.MetricTypes))
 	}
 
 	return &pb_services.SensorGetReply{
@@ -88,7 +87,6 @@ func (h *Handler) SensorPatientCreate(
 	if req == nil {
 		return nil, errRequestNil
 	}
-
 	if req.SensorId == "" || req.PatientId == "" {
 		return nil, errInvalidSensorData
 	}
@@ -123,14 +121,12 @@ func (h *Handler) SensorPatientGet(
 	if req == nil {
 		return nil, errRequestNil
 	}
-
 	if req.SensorId == "" {
 		return nil, errInvalidSensorData
 	}
 
-	sensorID := req.SensorId
 	resp, err := h.queries.SensorPatientGet.Execute(ctx, patient_get.Request{
-		SensorID: sensorID,
+		SensorID: req.SensorId,
 	})
 	if err != nil {
 		h.pkg.Logger.Errorf("Failed to get sensor patients: %v", err)
@@ -144,8 +140,8 @@ func (h *Handler) SensorPatientGet(
 	}
 
 	sensorPatients := make([]*pb_models.SensorPatient_Read, 0, len(resp.SensorPatients))
-	for _, sensorPatient := range resp.SensorPatients {
-		sensorPatients = append(sensorPatients, sensorPatientPropsToPb(sensorPatient))
+	for _, sp := range resp.SensorPatients {
+		sensorPatients = append(sensorPatients, sensorPatientPropsToPb(sp))
 	}
 
 	return &pb_services.SensorPatientGetReply{
@@ -160,7 +156,6 @@ func (h *Handler) SensorPatientRetrieve(
 	if req == nil {
 		return nil, errRequestNil
 	}
-
 	if req.SensorId == "" || req.PatientId == "" {
 		return nil, errInvalidSensorData
 	}
@@ -186,7 +181,6 @@ func (h *Handler) SensorPatientMetricGet(
 	if req == nil {
 		return nil, errRequestNil
 	}
-
 	if req.SensorId == "" || req.PatientId == "" {
 		return nil, errInvalidSensorData
 	}
@@ -200,18 +194,66 @@ func (h *Handler) SensorPatientMetricGet(
 		return nil, err
 	}
 
-	if len(resp.Metrics) == 0 {
+	if len(resp.Measurements) == 0 {
 		return &pb_services.SensorPatientMetricGetReply{
-			SensorPatientMetrics: []*pb_models.SensorPatientMetric_Read{},
+			Measurements: []*pb_models.SensorPatientMetric_Read{},
 		}, nil
 	}
 
-	metrics := make([]*pb_models.SensorPatientMetric_Read, 0, len(resp.Metrics))
-	for _, metric := range resp.Metrics {
-		metrics = append(metrics, sensorPatientMetricPropsToPb(metric))
+	measurements := make([]*pb_models.SensorPatientMetric_Read, 0, len(resp.Measurements))
+	for _, m := range resp.Measurements {
+		measurements = append(measurements, measurementToPb(m))
 	}
 
 	return &pb_services.SensorPatientMetricGetReply{
-		SensorPatientMetrics: metrics,
+		Measurements: measurements,
+	}, nil
+}
+
+func (h *Handler) SensorPatientMetricHistoryGet(
+	ctx context.Context,
+	req *pb_services.SensorPatientMetricHistoryGetRequest,
+) (*pb_services.SensorPatientMetricHistoryGetReply, error) {
+	if req == nil {
+		return nil, errRequestNil
+	}
+	if req.SensorId == "" || req.PatientId == "" {
+		return nil, errInvalidSensorData
+	}
+
+	start := req.GetStartTime().AsTime()
+	end := req.GetEndTime().AsTime()
+	if end.IsZero() {
+		end = time.Now().UTC()
+	}
+
+	resp, err := h.queries.SensorPatientMetricHistoryGet.Execute(ctx, metric_history.Request{
+		SensorID:  req.SensorId,
+		PatientID: req.PatientId,
+		StartTime: start,
+		EndTime:   end,
+		Limit:     req.Limit,
+		Offset:    req.Offset,
+	})
+	if err != nil {
+		h.pkg.Logger.Errorf("Failed to get sensor patient metric history: %v", err)
+		return nil, err
+	}
+
+	if len(resp.Measurements) == 0 {
+		return &pb_services.SensorPatientMetricHistoryGetReply{
+			Measurements: []*pb_models.SensorPatientMetric_Read{},
+			Total:        int32(resp.Total),
+		}, nil
+	}
+
+	measurements := make([]*pb_models.SensorPatientMetric_Read, 0, len(resp.Measurements))
+	for _, m := range resp.Measurements {
+		measurements = append(measurements, measurementToPb(m))
+	}
+
+	return &pb_services.SensorPatientMetricHistoryGetReply{
+		Measurements: measurements,
+		Total:        int32(resp.Total),
 	}, nil
 }

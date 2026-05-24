@@ -10,6 +10,13 @@ type Options struct {
 	SensorPatientsRepo       contracts.SensorPatientsRepo
 	SensorPatientMetricsRepo contracts.SensorPatientMetricsRepo
 
-	DiseasesRepo              contracts.DiseasesRepo
-	DiseaseSensorsRepo        contracts.DiseaseSensorsRepo
+	DiseasesRepo       contracts.DiseasesRepo
+	DiseaseSensorsRepo contracts.DiseaseSensorsRepo
+
+	MetricTypesRepo            contracts.MetricTypesRepo
+	DiseaseMetricOverridesRepo contracts.DiseaseMetricOverridesRepo
+
+	PatientDiseasesReader contracts.PatientDiseasesReader
+
+	PanicRegistry contracts.PanicRegistry
 }

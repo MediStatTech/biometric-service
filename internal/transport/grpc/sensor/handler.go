@@ -8,6 +8,7 @@ import (
 	patient_get "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/get"
 	patient_retrieve "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/retrieve"
 	metric_get "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/metrics/get"
+	metric_history "github.com/MediStatTech/biometric-service/internal/app/biometric/usecases/sensors/patient/metrics/history"
 	s_options "github.com/MediStatTech/biometric-service/internal/app/options"
 	"github.com/MediStatTech/biometric-service/pkg"
 )
@@ -24,11 +25,12 @@ type Commands struct {
 }
 
 type Queries struct {
-	SensorGet              *sensor_get.Interactor
-	SensorRetrieve         *sensor_retrieve.Interactor
-	SensorPatientGet       *patient_get.Interactor
-	SensorPatientRetrieve  *patient_retrieve.Interactor
-	SensorPatientMetricGet *metric_get.Interactor
+	SensorGet                     *sensor_get.Interactor
+	SensorRetrieve                *sensor_retrieve.Interactor
+	SensorPatientGet              *patient_get.Interactor
+	SensorPatientRetrieve         *patient_retrieve.Interactor
+	SensorPatientMetricGet        *metric_get.Interactor
+	SensorPatientMetricHistoryGet *metric_history.Interactor
 }
 
 func New(opts *s_options.Options) *Handler {
@@ -39,11 +41,12 @@ func New(opts *s_options.Options) *Handler {
 			SensorPatientCreate: opts.App.Biometric.SensorPatientCreate,
 		},
 		queries: &Queries{
-			SensorGet:              opts.App.Biometric.SensorGet,
-			SensorRetrieve:         opts.App.Biometric.SensorRetrieve,
-			SensorPatientGet:       opts.App.Biometric.SensorPatientGet,
-			SensorPatientRetrieve:  opts.App.Biometric.SensorPatientRetrieve,
-			SensorPatientMetricGet: opts.App.Biometric.SensorPatientMetricGet,
+			SensorGet:                     opts.App.Biometric.SensorGet,
+			SensorRetrieve:                opts.App.Biometric.SensorRetrieve,
+			SensorPatientGet:              opts.App.Biometric.SensorPatientGet,
+			SensorPatientRetrieve:         opts.App.Biometric.SensorPatientRetrieve,
+			SensorPatientMetricGet:        opts.App.Biometric.SensorPatientMetricGet,
+			SensorPatientMetricHistoryGet: opts.App.Biometric.SensorPatientMetricHistoryGet,
 		},
 	}
 }

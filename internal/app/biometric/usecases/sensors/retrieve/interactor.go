@@ -8,17 +8,20 @@ import (
 )
 
 type Interactor struct {
-	sensorsRepo contracts.SensorsRepo
-	logger      contracts.Logger
+	sensorsRepo     contracts.SensorsRepo
+	metricTypesRepo contracts.MetricTypesRepo
+	logger          contracts.Logger
 }
 
 func New(
 	sensorsRepo contracts.SensorsRepo,
+	metricTypesRepo contracts.MetricTypesRepo,
 	logger contracts.Logger,
 ) *Interactor {
 	return &Interactor{
-		sensorsRepo: sensorsRepo,
-		logger:      logger,
+		sensorsRepo:     sensorsRepo,
+		metricTypesRepo: metricTypesRepo,
+		logger:          logger,
 	}
 }
 
@@ -31,7 +34,13 @@ func (it *Interactor) Execute(ctx context.Context, req Request) (*Response, erro
 		return nil, errFailedToGetSensor.SetInternal(err)
 	}
 
+	metricTypes, err := it.metricTypesRepo.FindBySensorID(ctx, req.SensorID)
+	if err != nil {
+		return nil, errFailedToGetSensor.SetInternal(err)
+	}
+
 	return &Response{
-		Sensor: sensor,
+		Sensor:      sensor,
+		MetricTypes: metricTypes,
 	}, nil
 }

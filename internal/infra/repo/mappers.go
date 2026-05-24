@@ -177,3 +177,90 @@ func sensorPatientMetricToCreateParams(spm *domain.SensorPatientMetric) []any {
 		spm.CreatedAt(),
 	}
 }
+
+// ============================================================================
+// Metric Types Mappers
+// ============================================================================
+
+func toMetricTypeProps(mt MetricType) domain.MetricTypeProps {
+	return domain.MetricTypeProps{
+		MetricTypeID: mt.MetricTypeID.String(),
+		SensorID:     mt.SensorID.String(),
+		Code:         mt.Code,
+		Name:         mt.Name,
+		Symbol:       mt.Symbol,
+		MinValue:     mt.MinValue,
+		MaxValue:     mt.MaxValue,
+		CreatedAt:    mt.CreatedAt,
+		UpdatedAt:    mt.UpdatedAt,
+	}
+}
+
+func metricTypeToCreateParams(mt *domain.MetricType) []any {
+	id, _ := uuid.Parse(mt.MetricTypeID())
+	sensorID, _ := uuid.Parse(mt.SensorID())
+	return []any{
+		id,
+		sensorID,
+		mt.Code(),
+		mt.Name(),
+		mt.Symbol(),
+		mt.MinValue(),
+		mt.MaxValue(),
+		mt.CreatedAt(),
+		mt.UpdatedAt(),
+	}
+}
+
+func metricTypeToUpdateParams(mt *domain.MetricType) []any {
+	id, _ := uuid.Parse(mt.MetricTypeID())
+	return []any{
+		id,
+		mt.Code(),
+		mt.Name(),
+		mt.Symbol(),
+		mt.MinValue(),
+		mt.MaxValue(),
+		mt.UpdatedAt(),
+	}
+}
+
+// ============================================================================
+// Disease Metric Overrides Mappers
+// ============================================================================
+
+func toDiseaseMetricOverrideProps(o DiseaseMetricOverride) domain.DiseaseMetricOverrideProps {
+	return domain.DiseaseMetricOverrideProps{
+		DiseaseID:    o.DiseaseID.String(),
+		MetricTypeID: o.MetricTypeID.String(),
+		MinValue:     o.MinValue,
+		MaxValue:     o.MaxValue,
+		CreatedAt:    o.CreatedAt,
+		UpdatedAt:    o.UpdatedAt,
+	}
+}
+
+func diseaseMetricOverrideToCreateParams(o *domain.DiseaseMetricOverride) []any {
+	did, _ := uuid.Parse(o.DiseaseID())
+	mid, _ := uuid.Parse(o.MetricTypeID())
+	return []any{
+		did,
+		mid,
+		o.MinValue(),
+		o.MaxValue(),
+		o.CreatedAt(),
+		o.UpdatedAt(),
+	}
+}
+
+func diseaseMetricOverrideToUpdateParams(o *domain.DiseaseMetricOverride) []any {
+	did, _ := uuid.Parse(o.DiseaseID())
+	mid, _ := uuid.Parse(o.MetricTypeID())
+	return []any{
+		did,
+		mid,
+		o.MinValue(),
+		o.MaxValue(),
+		o.UpdatedAt(),
+	}
+}

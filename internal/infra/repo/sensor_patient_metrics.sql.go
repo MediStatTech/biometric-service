@@ -30,6 +30,34 @@ func (q *Queries) CountSensorPatientMetrics(ctx context.Context, arg CountSensor
 	return count, err
 }
 
+const CountSensorPatientMetricsByTimeRange = `-- name: CountSensorPatientMetricsByTimeRange :one
+SELECT COUNT(*)
+FROM sensor_patient_metrics
+WHERE sensor_id = $1
+    AND patient_id = $2
+    AND created_at >= $3
+    AND created_at <= $4
+`
+
+type CountSensorPatientMetricsByTimeRangeParams struct {
+	SensorID    uuid.UUID `db:"sensor_id"`
+	PatientID   uuid.UUID `db:"patient_id"`
+	CreatedAt   time.Time `db:"created_at"`
+	CreatedAt_2 time.Time `db:"created_at_2"`
+}
+
+func (q *Queries) CountSensorPatientMetricsByTimeRange(ctx context.Context, arg CountSensorPatientMetricsByTimeRangeParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountSensorPatientMetricsByTimeRange,
+		arg.SensorID,
+		arg.PatientID,
+		arg.CreatedAt,
+		arg.CreatedAt_2,
+	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const CreateSensorPatientMetric = `-- name: CreateSensorPatientMetric :exec
 INSERT INTO sensor_patient_metrics (
     sensor_id,
@@ -368,6 +396,63 @@ func (q *Queries) ListSensorPatientMetricsByTimeRange(ctx context.Context, arg L
 		arg.PatientID,
 		arg.CreatedAt,
 		arg.CreatedAt_2,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SensorPatientMetric{}
+	for rows.Next() {
+		var i SensorPatientMetric
+		if err := rows.Scan(
+			&i.SensorID,
+			&i.PatientID,
+			&i.MetricID,
+			&i.Value,
+			&i.Symbol,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const ListSensorPatientMetricsByTimeRangePaged = `-- name: ListSensorPatientMetricsByTimeRangePaged :many
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
+FROM sensor_patient_metrics
+WHERE sensor_id = $1
+    AND patient_id = $2
+    AND created_at >= $3
+    AND created_at <= $4
+ORDER BY created_at DESC
+LIMIT $5 OFFSET $6
+`
+
+type ListSensorPatientMetricsByTimeRangePagedParams struct {
+	SensorID    uuid.UUID `db:"sensor_id"`
+	PatientID   uuid.UUID `db:"patient_id"`
+	CreatedAt   time.Time `db:"created_at"`
+	CreatedAt_2 time.Time `db:"created_at_2"`
+	Limit       int32     `db:"limit"`
+	Offset      int32     `db:"offset"`
+}
+
+func (q *Queries) ListSensorPatientMetricsByTimeRangePaged(ctx context.Context, arg ListSensorPatientMetricsByTimeRangePagedParams) ([]SensorPatientMetric, error) {
+	rows, err := q.db.QueryContext(ctx, ListSensorPatientMetricsByTimeRangePaged,
+		arg.SensorID,
+		arg.PatientID,
+		arg.CreatedAt,
+		arg.CreatedAt_2,
+		arg.Limit,
+		arg.Offset,
 	)
 	if err != nil {
 		return nil, err

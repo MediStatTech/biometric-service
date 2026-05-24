@@ -20,6 +20,24 @@ WHERE sensor_id = $1
     AND created_at <= $4
 ORDER BY created_at DESC;
 
+-- name: ListSensorPatientMetricsByTimeRangePaged :many
+SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
+FROM sensor_patient_metrics
+WHERE sensor_id = $1
+    AND patient_id = $2
+    AND created_at >= $3
+    AND created_at <= $4
+ORDER BY created_at DESC
+LIMIT $5 OFFSET $6;
+
+-- name: CountSensorPatientMetricsByTimeRange :one
+SELECT COUNT(*)
+FROM sensor_patient_metrics
+WHERE sensor_id = $1
+    AND patient_id = $2
+    AND created_at >= $3
+    AND created_at <= $4;
+
 -- name: ListSensorPatientMetricsBySensor :many
 SELECT sensor_id, patient_id, metric_id, value, symbol, created_at
 FROM sensor_patient_metrics

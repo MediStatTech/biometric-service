@@ -8,81 +8,42 @@ import (
 	"github.com/MediStatTech/biometric-service/internal/app/biometric/contracts"
 	"github.com/MediStatTech/biometric-service/internal/app/biometric/domain"
 	"github.com/MediStatTech/biometric-service/pkg/commitplan"
-	"github.com/google/uuid"
 )
 
-// MetricRange defines the min/max range for a disease's metric values.
-// TODO: fill in real disease_id -> range mappings
-var diseaseMetricRanges = map[string]MetricRange{
-	// Example: "disease-uuid-here": {Min: 60, Max: 100},
-	"ce6d289f-73de-441c-b2af-8f781ab2d162": {Min: 3.9, Max: 10},
-	"cb09a1b3-c33f-4090-9361-11567bde2443": {Min: 60, Max: 90},
-	"d06fc6dd-976d-4a91-88e6-b60c37740a45": {Min: 95, Max: 100},
-
-}
-
-type MetricRange struct {
-	Min float64
-	Max float64
-}
-
 type Interactor struct {
-	sensorsRepo              contracts.SensorsRepo
-	sensorPatientsRepo       contracts.SensorPatientsRepo
-	sensorPatientMetricsRepo contracts.SensorPatientMetricsRepo
-	diseaseSensorsRepo       contracts.DiseaseSensorsRepo
-	committer                contracts.Committer
-	logger                   contracts.Logger
+	sensorPatientsRepo         contracts.SensorPatientsRepo
+	sensorPatientMetricsRepo   contracts.SensorPatientMetricsRepo
+	metricTypesRepo            contracts.MetricTypesRepo
+	diseaseMetricOverridesRepo contracts.DiseaseMetricOverridesRepo
+	patientDiseasesReader      contracts.PatientDiseasesReader
+	panicRegistry              contracts.PanicRegistry
+	committer                  contracts.Committer
+	logger                     contracts.Logger
 }
 
 func New(
-	sensorsRepo contracts.SensorsRepo,
 	sensorPatientsRepo contracts.SensorPatientsRepo,
 	sensorPatientMetricsRepo contracts.SensorPatientMetricsRepo,
-	diseaseSensorsRepo contracts.DiseaseSensorsRepo,
+	metricTypesRepo contracts.MetricTypesRepo,
+	diseaseMetricOverridesRepo contracts.DiseaseMetricOverridesRepo,
+	patientDiseasesReader contracts.PatientDiseasesReader,
+	panicRegistry contracts.PanicRegistry,
 	committer contracts.Committer,
 	logger contracts.Logger,
 ) *Interactor {
 	return &Interactor{
-		sensorsRepo:              sensorsRepo,
-		sensorPatientsRepo:       sensorPatientsRepo,
-		sensorPatientMetricsRepo: sensorPatientMetricsRepo,
-		diseaseSensorsRepo:       diseaseSensorsRepo,
-		committer:                committer,
-		logger:                   logger,
+		sensorPatientsRepo:         sensorPatientsRepo,
+		sensorPatientMetricsRepo:   sensorPatientMetricsRepo,
+		metricTypesRepo:            metricTypesRepo,
+		diseaseMetricOverridesRepo: diseaseMetricOverridesRepo,
+		patientDiseasesReader:      patientDiseasesReader,
+		panicRegistry:              panicRegistry,
+		committer:                  committer,
+		logger:                     logger,
 	}
 }
 
 func (it *Interactor) Execute(ctx context.Context) error {
-	// 1. Get all sensors -> map[sensorID]SensorProps
-	sensors, err := it.sensorsRepo.FindAll(ctx)
-	if err != nil {
-		it.logger.Error("[MetricGenerator] Failed to get sensors", map[string]any{
-			"error": err.Error(),
-		})
-		return err
-	}
-
-	sensorsMap := make(map[string]domain.SensorProps, len(sensors))
-	for _, s := range sensors {
-		sensorsMap[s.SensorID] = s
-	}
-
-	// 2. Get all disease_sensors -> map[sensorID][]diseaseID
-	diseaseSensors, err := it.diseaseSensorsRepo.FindAll(ctx)
-	if err != nil {
-		it.logger.Error("[MetricGenerator] Failed to get disease_sensors", map[string]any{
-			"error": err.Error(),
-		})
-		return err
-	}
-
-	sensorDiseasesMap := make(map[string][]string)
-	for _, ds := range diseaseSensors {
-		sensorDiseasesMap[ds.SensorID] = append(sensorDiseasesMap[ds.SensorID], ds.DiseaseID)
-	}
-
-	// 3. Get all active sensor_patients
 	activePatients, err := it.sensorPatientsRepo.FindByStatus(ctx, domain.SensorPatientStatusActive)
 	if err != nil {
 		it.logger.Error("[MetricGenerator] Failed to get active sensor_patients", map[string]any{
@@ -90,40 +51,104 @@ func (it *Interactor) Execute(ctx context.Context) error {
 		})
 		return err
 	}
-
 	if len(activePatients) == 0 {
-		it.logger.Debug("[MetricGenerator] No active sensor_patients found", map[string]any{})
 		return nil
 	}
 
-	// 4. Generate metrics for each active patient
-	now := time.Now()
+	metricTypes, err := it.metricTypesRepo.FindAll(ctx)
+	if err != nil {
+		it.logger.Error("[MetricGenerator] Failed to get metric_types", map[string]any{
+			"error": err.Error(),
+		})
+		return err
+	}
+	if len(metricTypes) == 0 {
+		return nil
+	}
+
+	overrides, err := it.diseaseMetricOverridesRepo.FindAll(ctx)
+	if err != nil {
+		it.logger.Error("[MetricGenerator] Failed to get disease_metric_overrides", map[string]any{
+			"error": err.Error(),
+		})
+		return err
+	}
+
+	typesBySensor := make(map[string][]domain.MetricTypeProps, len(metricTypes))
+	for _, mt := range metricTypes {
+		typesBySensor[mt.SensorID] = append(typesBySensor[mt.SensorID], mt)
+	}
+
+	overridesByDiseaseMT := make(map[string]map[string]domain.DiseaseMetricOverrideProps)
+	for _, o := range overrides {
+		m, ok := overridesByDiseaseMT[o.DiseaseID]
+		if !ok {
+			m = make(map[string]domain.DiseaseMetricOverrideProps)
+			overridesByDiseaseMT[o.DiseaseID] = m
+		}
+		m[o.MetricTypeID] = o
+	}
+
+	patientDiseases := make(map[string][]string)
+	for _, sp := range activePatients {
+		if _, cached := patientDiseases[sp.PatientID]; cached {
+			continue
+		}
+		diseases, err := it.patientDiseasesReader.FindByPatientID(ctx, sp.PatientID)
+		if err != nil {
+			it.logger.Warn("[MetricGenerator] Failed to get patient_diseases", map[string]any{
+				"patient_id": sp.PatientID,
+				"error":      err.Error(),
+			})
+			diseases = nil
+		}
+		patientDiseases[sp.PatientID] = diseases
+	}
+
+	now := time.Now().UTC()
 	var metrics []*domain.SensorPatientMetric
 
 	for _, sp := range activePatients {
-		sensor, ok := sensorsMap[sp.SensorID]
-		if !ok {
+		types, ok := typesBySensor[sp.SensorID]
+		if !ok || len(types) == 0 {
 			continue
 		}
+		diseases := patientDiseases[sp.PatientID]
+		inPanic := it.panicRegistry.IsPanicking(sp.PatientID)
 
-		value := generateMetricValue(sp.SensorID, sensorDiseasesMap)
+		for _, mt := range types {
+			minVal, maxVal := mt.MinValue, mt.MaxValue
+			for _, did := range diseases {
+				if mts, ok := overridesByDiseaseMT[did]; ok {
+					if o, ok := mts[mt.MetricTypeID]; ok {
+						minVal, maxVal = o.MinValue, o.MaxValue
+						break
+					}
+				}
+			}
 
-		metric := domain.NewSensorPatientMetric(
-			sp.SensorID,
-			sp.PatientID,
-			uuid.NewString(),
-			value,
-			sensor.Symbol,
-			now,
-		)
-		metrics = append(metrics, metric)
+			var value float64
+			if inPanic {
+				value = generateCriticalValue(minVal, maxVal)
+			} else {
+				value = minVal + rand.Float64()*(maxVal-minVal)
+			}
+
+			metrics = append(metrics, domain.NewSensorPatientMetric(
+				sp.SensorID,
+				sp.PatientID,
+				mt.MetricTypeID,
+				value,
+				mt.Symbol,
+				now,
+			))
+		}
 	}
 
 	if len(metrics) == 0 {
 		return nil
 	}
 
-	// 5. Batch commit
 	mutations := it.sensorPatientMetricsRepo.CreateBatchMut(metrics)
 	plan := commitplan.NewPlan()
 	plan.AddMuts(mutations...)
@@ -139,20 +164,15 @@ func (it *Interactor) Execute(ctx context.Context) error {
 	it.logger.Debug("[MetricGenerator] Generated metrics", map[string]any{
 		"count": len(metrics),
 	})
-
 	return nil
 }
 
-func generateMetricValue(sensorID string, sensorDiseasesMap map[string][]string) float64 {
-	diseaseIDs, ok := sensorDiseasesMap[sensorID]
-	if ok {
-		for _, diseaseID := range diseaseIDs {
-			if r, exists := diseaseMetricRanges[diseaseID]; exists {
-				return r.Min + rand.Float64()*(r.Max-r.Min)
-			}
-		}
+func generateCriticalValue(minVal, maxVal float64) float64 {
+	rangeSize := maxVal - minVal
+	if rangeSize <= 0 {
+		return maxVal
 	}
-
-	// Default range if no disease mapping found
-	return 60.0 + rand.Float64()*40.0
+	low := maxVal + rangeSize*0.3
+	high := maxVal + rangeSize*0.6
+	return low + rand.Float64()*(high-low)
 }

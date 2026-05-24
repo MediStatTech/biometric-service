@@ -4,7 +4,7 @@ go 1.25.4
 
 require (
 	github.com/MediStatTech/MediStat-error v1.0.1
-	github.com/MediStatTech/biometric-client v0.0.0-20260214133007-411c9c3474ad
+	github.com/MediStatTech/biometric-client v0.0.0-20260524140252-e3843ca4e374
 	github.com/MediStatTech/commitplan v1.0.2
 	github.com/MediStatTech/jwt v1.0.3
 	github.com/MediStatTech/logger v0.0.0-20260125154403-dc19bcd90420
